@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeftIcon, ArrowRightIcon } from './Icons';
+import { ArrowLeftIcon, ArrowRightIcon, ExpandIcon } from './Icons';
 import { PreviewArt } from './PreviewArt';
 import { getWrappedIndex } from '../data/experiences';
 
 const BANDIT_SPIN_DURATION_MS = 760;
 const BANDIT_REVEAL_DELAY_MS = 240;
 
-export function Lobby({ experiences, activeIndex, onActiveIndexChange, onLaunch }) {
+export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexChange, onLaunch, onToggleFullscreen }) {
   const trackRef = useRef(null);
   const cardRefs = useRef([]);
   const scrollFrameRef = useRef(0);
@@ -266,6 +266,13 @@ export function Lobby({ experiences, activeIndex, onActiveIndexChange, onLaunch 
             <ArrowRightIcon className="carousel-arrow__icon" />
           </button>
         </div>
+      </div>
+
+      <div className="fullscreen-dock">
+        <button className={`action-button action-button--dock ${isFullscreen ? 'is-armed' : ''}`.trim()} onClick={onToggleFullscreen} type="button">
+          <ExpandIcon className="action-button__icon" />
+          <span>{isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}</span>
+        </button>
       </div>
     </div>
   );

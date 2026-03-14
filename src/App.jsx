@@ -136,8 +136,10 @@ export default function App() {
         <Lobby
           experiences={experiences}
           activeIndex={activeIndex}
+          isFullscreen={isFullscreen}
           onActiveIndexChange={setActiveIndex}
           onLaunch={openExperience}
+          onToggleFullscreen={togglePlayerFullscreen}
         />
       </section>
 
