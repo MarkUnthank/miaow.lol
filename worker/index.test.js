@@ -27,6 +27,28 @@ function createAssetResponse(body, contentType = 'text/html; charset=utf-8') {
 }
 
 describe('cloudflare worker integration', () => {
+  it('redirects http requests to https before serving assets', async () => {
+    const env = {
+      ASSETS: {
+        fetch: vi.fn(),
+      },
+      PUBLIC_SITE_ORIGIN: 'https://miaow.lol',
+    };
+
+    const response = await worker.fetch(
+      new Request('http://miaow.lol/?experience=nap-nebula', {
+        headers: {
+          'x-forwarded-proto': 'http',
+        },
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(301);
+    expect(response.headers.get('location')).toBe('https://miaow.lol/?experience=nap-nebula');
+    expect(env.ASSETS.fetch).not.toHaveBeenCalled();
+  });
+
   it('rewrites home document metadata for a shared experience url', async () => {
     const env = {
       ASSETS: {

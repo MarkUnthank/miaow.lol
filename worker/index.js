@@ -6,6 +6,7 @@ const HOME_PATHS = new Set(['/', '/index.html']);
 const SECURITY_HEADERS = {
   'Permissions-Policy': 'camera=(), geolocation=(), microphone=()',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Strict-Transport-Security': 'max-age=31536000',
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
 };
@@ -114,6 +115,27 @@ function findExperienceFromRequest(requestUrl) {
   return experienceCatalog.find((experience) => experience.id === experienceId) ?? null;
 }
 
+function shouldRedirectToHttps(request, requestUrl) {
+  const forwardedProto = request.headers.get('x-forwarded-proto');
+
+  if (forwardedProto === 'http') {
+    return true;
+  }
+
+  if (forwardedProto === 'https') {
+    return false;
+  }
+
+  return requestUrl.protocol === 'http:';
+}
+
+function createHttpsRedirect(request, requestUrl) {
+  const redirectUrl = new URL(requestUrl.toString());
+  redirectUrl.protocol = 'https:';
+
+  return Response.redirect(redirectUrl.toString(), request.method === 'GET' || request.method === 'HEAD' ? 301 : 308);
+}
+
 function applyHeaders(response, extraHeaders = {}) {
   const headers = new Headers(response.headers);
 
@@ -184,6 +206,11 @@ async function handleHtmlRequest(request, env) {
 export default {
   async fetch(request, env) {
     const requestUrl = new URL(request.url);
+
+    if (shouldRedirectToHttps(request, requestUrl)) {
+      return createHttpsRedirect(request, requestUrl);
+    }
+
     const siteOrigin = getSiteOrigin(requestUrl, env);
     const preview = isPreviewRequest(requestUrl, env);
 
