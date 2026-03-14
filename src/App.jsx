@@ -3,6 +3,56 @@ import { Lobby } from './components/Lobby';
 import { Player } from './components/Player';
 import { experiences, getRandomExperienceIndex, getWrappedIndex } from './data/experiences';
 
+const APP_HISTORY_MARKER = '__miaow';
+
+function buildAppHistoryState({ activeIndex, currentIndex, mode, step }) {
+  return {
+    [APP_HISTORY_MARKER]: true,
+    activeIndex,
+    currentIndex,
+    mode,
+    step,
+  };
+}
+
+function normalizeAppHistoryState(state) {
+  if (!state?.[APP_HISTORY_MARKER]) {
+    return null;
+  }
+
+  const mode = state.mode === 'player' ? 'player' : 'lobby';
+  const activeIndex = getWrappedIndex(Number.isInteger(state.activeIndex) ? state.activeIndex : 0);
+  const currentIndex = getWrappedIndex(Number.isInteger(state.currentIndex) ? state.currentIndex : activeIndex);
+  const step = Number.isInteger(state.step) ? Math.max(state.step, 0) : 0;
+
+  return {
+    activeIndex,
+    currentIndex,
+    mode,
+    step,
+  };
+}
+
+function getInitialAppState() {
+  if (typeof window === 'undefined') {
+    return {
+      activeIndex: 0,
+      currentIndex: 0,
+      mode: 'lobby',
+      step: 0,
+    };
+  }
+
+  return (
+    normalizeAppHistoryState(window.history.state) ?? {
+      activeIndex: 0,
+      currentIndex: 0,
+      mode: 'lobby',
+      step: 0,
+    }
+  );
+}
+
 function toThemeStyle(theme) {
   return {
     '--theme-bg': theme.bg,
@@ -21,15 +71,43 @@ function toThemeStyle(theme) {
 
 export default function App() {
   const appRef = useRef(null);
-  const [mode, setMode] = useState('lobby');
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const historyReadyRef = useRef(false);
+  const initialAppState = useMemo(() => getInitialAppState(), []);
+  const historyStepRef = useRef(initialAppState.step);
+  const [mode, setMode] = useState(initialAppState.mode);
+  const [activeIndex, setActiveIndex] = useState(initialAppState.activeIndex);
+  const [currentIndex, setCurrentIndex] = useState(initialAppState.currentIndex);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const themedExperience = useMemo(
     () => experiences[mode === 'player' ? currentIndex : activeIndex],
     [activeIndex, currentIndex, mode],
   );
+
+  function applyAppState(nextState) {
+    historyStepRef.current = nextState.step;
+
+    startTransition(() => {
+      setMode(nextState.mode);
+      setCurrentIndex(nextState.currentIndex);
+      setActiveIndex(nextState.mode === 'player' ? nextState.currentIndex : nextState.activeIndex);
+    });
+  }
+
+  function writeHistoryState(nextState, historyMode = 'push') {
+    if (!historyReadyRef.current) {
+      return;
+    }
+
+    const method = historyMode === 'replace' ? 'replaceState' : 'pushState';
+    window.history[method](buildAppHistoryState(nextState), '', window.location.href);
+  }
+
+  function navigateToState(nextState, historyMode = 'push') {
+    experiences[nextState.currentIndex].preload();
+    writeHistoryState(nextState, historyMode);
+    applyAppState(nextState);
+  }
 
   useEffect(() => {
     const syncFullscreenState = () => {
@@ -45,6 +123,35 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const initialHistoryState = {
+      activeIndex: initialAppState.activeIndex,
+      currentIndex: initialAppState.currentIndex,
+      mode: initialAppState.mode,
+      step: initialAppState.step,
+    };
+
+    window.history.replaceState(buildAppHistoryState(initialHistoryState), '', window.location.href);
+    historyReadyRef.current = true;
+
+    const handlePopState = (event) => {
+      const nextState = normalizeAppHistoryState(event.state);
+
+      if (!nextState) {
+        return;
+      }
+
+      applyAppState(nextState);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      historyReadyRef.current = false;
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [initialAppState]);
+
+  useEffect(() => {
     experiences[activeIndex].preload();
     experiences[getWrappedIndex(activeIndex + 1)].preload();
     experiences[getWrappedIndex(activeIndex - 1)].preload();
@@ -53,6 +160,32 @@ export default function App() {
   useEffect(() => {
     experiences[currentIndex].preload();
   }, [currentIndex]);
+
+  useEffect(() => {
+    if (!historyReadyRef.current || mode !== 'lobby') {
+      return;
+    }
+
+    const nextState = {
+      activeIndex,
+      currentIndex,
+      mode: 'lobby',
+      step: historyStepRef.current,
+    };
+    const currentHistoryState = normalizeAppHistoryState(window.history.state);
+
+    if (
+      currentHistoryState &&
+      currentHistoryState.mode === nextState.mode &&
+      currentHistoryState.activeIndex === nextState.activeIndex &&
+      currentHistoryState.currentIndex === nextState.currentIndex &&
+      currentHistoryState.step === nextState.step
+    ) {
+      return;
+    }
+
+    window.history.replaceState(buildAppHistoryState(nextState), '', window.location.href);
+  }, [activeIndex, currentIndex, mode]);
 
   async function requestFullscreen() {
     if (document.fullscreenElement || !appRef.current?.requestFullscreen) {
@@ -80,38 +213,58 @@ export default function App() {
 
   async function openExperience(index) {
     const nextIndex = getWrappedIndex(index);
-    experiences[nextIndex].preload();
-
-    startTransition(() => {
-      setCurrentIndex(nextIndex);
-      setActiveIndex(nextIndex);
-      setMode('player');
-    });
+    navigateToState(
+      {
+        activeIndex: nextIndex,
+        currentIndex: nextIndex,
+        mode: 'player',
+        step: historyStepRef.current + 1,
+      },
+      'push',
+    );
   }
 
   function goBackToLobby() {
-    startTransition(() => {
-      setMode('lobby');
-      setActiveIndex(currentIndex);
-    });
+    if (historyReadyRef.current && historyStepRef.current > 0) {
+      window.history.back();
+      return;
+    }
+
+    navigateToState(
+      {
+        activeIndex: currentIndex,
+        currentIndex,
+        mode: 'lobby',
+        step: 0,
+      },
+      'replace',
+    );
   }
 
   function showPreviousExperience() {
     const previousIndex = getWrappedIndex(currentIndex - 1);
-
-    startTransition(() => {
-      setCurrentIndex(previousIndex);
-      setActiveIndex(previousIndex);
-    });
+    navigateToState(
+      {
+        activeIndex: previousIndex,
+        currentIndex: previousIndex,
+        mode: 'player',
+        step: historyStepRef.current + 1,
+      },
+      'push',
+    );
   }
 
   function showRandomExperience() {
     const nextIndex = getRandomExperienceIndex(currentIndex);
-
-    startTransition(() => {
-      setCurrentIndex(nextIndex);
-      setActiveIndex(nextIndex);
-    });
+    navigateToState(
+      {
+        activeIndex: nextIndex,
+        currentIndex: nextIndex,
+        mode: 'player',
+        step: historyStepRef.current + 1,
+      },
+      'push',
+    );
   }
 
   async function togglePlayerFullscreen() {
