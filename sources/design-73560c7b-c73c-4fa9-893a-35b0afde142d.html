@@ -1,0 +1,485 @@
+<html lang="en" vid="0"><head vid="1">
+<meta charset="UTF-8" vid="2">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" vid="3">
+<title vid="4">Kitty Smasher 3000!</title>
+<style vid="5">
+    @import url('https://fonts.googleapis.com/css2?family=DynaPuff:wght@700&display=swap');
+
+    :root {
+        --sky: #49B6F5;
+        --grass: #8CC63F;
+        --sun: #FFD100;
+        --pink: #F47DB3;
+        --orange: #F26D22;
+        --purple: #9B51E0;
+    }
+
+    * {
+        box-sizing: border-box;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    body, html {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: var(--sky);
+        font-family: 'DynaPuff', cursive;
+        cursor: crosshair;
+        touch-action: none; 
+    }
+
+    
+    .bg-sky {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: radial-gradient(circle at 50% 120%, var(--sky) 0%, #aee0fa 100%);
+        z-index: 1;
+    }
+
+    .sunburst {
+        position: absolute;
+        top: -20vmin;
+        left: 50%;
+        width: 150vmin;
+        height: 150vmin;
+        transform: translateX(-50%);
+        background: repeating-conic-gradient(
+            from 0deg,
+            rgba(255, 255, 255, 0.1) 0deg 15deg,
+            transparent 15deg 30deg
+        );
+        animation: rotate 60s linear infinite;
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    
+    .ground-container {
+        position: absolute;
+        bottom: 0; left: 0; width: 100%; height: 30vh;
+        z-index: 3;
+        pointer-events: none;
+    }
+
+    .ground-layer {
+        position: absolute;
+        bottom: 0; left: 0; width: 100%; height: 100%;
+        background-repeat: repeat-x;
+        background-position: bottom;
+    }
+
+    .ground-back {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V95.8C59.71,118.08,130.83,114.13,189,96.5c72.09-21.84,136.21-39.11,132.39-40.06z' fill='%236bb82a'/%3E%3C/svg%3E");
+        background-size: 150% 100%;
+        animation: wave 20s linear infinite alternate;
+    }
+
+    .ground-front {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z' fill='%238CC63F'/%3E%3C/svg%3E");
+        background-size: 100% 100%;
+        height: 80%;
+    }
+
+    
+    .bg-deco {
+        position: absolute;
+        pointer-events: none;
+        z-index: 4;
+    }
+
+    
+    .prompt-container {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 100;
+        text-align: center;
+        pointer-events: none;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .prompt-text {
+        font-size: 6vw;
+        color: white;
+        text-transform: uppercase;
+        line-height: 1.1;
+        text-shadow: 
+            3px 3px 0 var(--pink),
+            -3px -3px 0 var(--pink),
+            3px -3px 0 var(--pink),
+            -3px 3px 0 var(--pink),
+            0px 8px 0px rgba(0,0,0,0.2);
+        animation: pulse 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        white-space: nowrap;
+    }
+
+    .prompt-sub {
+        font-size: 3vw;
+        color: var(--sun);
+        text-shadow: 2px 2px 0 #d96900, 0 4px 0 rgba(0,0,0,0.2);
+        margin-top: 20px;
+    }
+
+    
+    #particle-container {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 50;
+        pointer-events: none;
+        overflow: hidden;
+    }
+
+    
+    .entity {
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        will-change: transform, opacity;
+        transform-origin: center center;
+    }
+
+    
+    .trail {
+        font-size: 2rem;
+        filter: drop-shadow(0px 4px 0px rgba(0,0,0,0.15));
+        animation: floatUp 0.8s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    
+    .smash {
+        font-size: 10rem;
+        filter: drop-shadow(0px 12px 0px rgba(0,0,0,0.25));
+        animation: popAndFall 2s forwards cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    
+    .text-pop {
+        font-size: 8rem;
+        color: white;
+        text-transform: uppercase;
+        font-weight: 700;
+        animation: popText 1.2s forwards cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    
+    @keyframes rotate {
+        100% { transform: translateX(-50%) rotate(360deg); }
+    }
+
+    @keyframes wave {
+        100% { background-position: 150% bottom; }
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1) rotate(-2deg); }
+        50% { transform: scale(1.05) rotate(2deg); }
+    }
+
+    @keyframes floatUp {
+        0% { transform: scale(0) translateY(0) rotate(var(--rot-start)); opacity: 1; }
+        50% { transform: scale(1.2) translateY(-20px) rotate(var(--rot-end)); opacity: 1; }
+        100% { transform: scale(0.5) translateY(-60px) rotate(var(--rot-end)); opacity: 0; }
+    }
+
+    @keyframes popAndFall {
+        0% { transform: scale(0) translateY(50px) rotate(var(--rot-start)); opacity: 1; }
+        15% { transform: scale(1.2) translateY(-40px) rotate(var(--rot-mid)); opacity: 1; }
+        30% { transform: scale(1) translateY(-20px) rotate(var(--rot-mid)); opacity: 1; }
+        100% { transform: scale(0.8) translateY(100vh) rotate(var(--rot-end)); opacity: 0; }
+    }
+
+    @keyframes popText {
+        0% { transform: scale(0) rotate(var(--rot-start)); opacity: 1; }
+        20% { transform: scale(1.3) rotate(var(--rot-mid)); opacity: 1; }
+        40% { transform: scale(1) rotate(var(--rot-mid)); opacity: 1; }
+        100% { transform: scale(1.5) translateY(-50px) rotate(var(--rot-end)); opacity: 0; filter: blur(4px); }
+    }
+
+    
+    #frenzy-flash {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 80%);
+        z-index: 90;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.1s;
+    }
+    .frenzy-active {
+        opacity: 1 !important;
+        transition: opacity 0.5s ease-out !important;
+    }
+
+</style>
+</head>
+<body vid="6">
+
+    <div class="bg-sky" vid="7"></div>
+    <div class="sunburst" vid="8"></div>
+    
+    
+    <div class="bg-deco" style="top: 15%; left: 10%; font-size: 4rem; opacity: 0.8; transform: rotate(-15deg);" vid="9">🦋</div>
+    <div class="bg-deco" style="top: 25%; right: 15%; font-size: 3rem; opacity: 0.8; transform: rotate(20deg);" vid="10">⭐</div>
+    <div class="bg-deco" style="top: 60%; left: 5%; font-size: 5rem; opacity: 0.6; transform: rotate(45deg);" vid="11">🍬</div>
+
+    <div class="ground-container" vid="12">
+        <div class="ground-layer ground-back" vid="13"></div>
+        <div class="ground-layer ground-front" vid="14"></div>
+    </div>
+
+    <div id="particle-container" vid="15"></div>
+    <div id="frenzy-flash" vid="16"></div>
+
+    <div class="prompt-container" id="prompt" vid="17">
+        <div class="prompt-text" vid="18">Smash the<br vid="19">Keyboard!</div>
+        <div class="prompt-sub" vid="20">Or wiggle the mouse!</div>
+    </div>
+
+<script vid="21">
+    
+
+    const container = document.getElementById('particle-container');
+    const prompt = document.getElementById('prompt');
+    const frenzyFlash = document.getElementById('frenzy-flash');
+    
+    let isInteracting = false;
+    let keyPressCount = 0;
+    let frenzyTimer;
+    let lastMouseTime = 0;
+
+    
+    const cats = ['🐱', '😸', '😻', '😼', '😽', '🙀', '😿', '😹', '🐈', '🐈‍⬛', '🦁', '🐯'];
+    const trails = ['🐾', '✨', '⭐', '🐟', '🧶', '🫧', '🌸'];
+    const words = ['MEOW!', 'PURRR', 'HISS!', 'BOOP!', 'YAY!', 'SMASH!', 'WOW!'];
+    
+    
+    const colors = [
+        '#F47DB3', 
+        '#F26D22', 
+        '#FFD100', 
+        '#8CC63F', 
+        '#49B6F5', 
+        '#9B51E0'  
+    ];
+
+    
+    
+    let audioCtx;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    
+    const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
+
+    function playPop() {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        const freq = notes[Math.floor(Math.random() * notes.length)];
+        osc.type = Math.random() > 0.5 ? 'sine' : 'triangle';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        
+        
+        gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+    }
+
+    function playMeowSlide() {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        
+        osc.type = 'triangle';
+        const startFreq = 600 + Math.random() * 400;
+        osc.frequency.setValueAtTime(startFreq, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(startFreq * 0.5, audioCtx.currentTime + 0.4);
+
+        
+        gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+    }
+
+    
+
+    function hidePrompt() {
+        if (!isInteracting) {
+            isInteracting = true;
+            prompt.style.opacity = '0';
+            prompt.style.transform = 'translate(-50%, -50%) scale(0.8)';
+            initAudio(); 
+        }
+    }
+
+    function randomRange(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+
+    function getRandomColor() {
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    
+    function spawnTrail(x, y) {
+        const el = document.createElement('div');
+        el.classList.add('entity', 'trail');
+        el.innerText = trails[Math.floor(Math.random() * trails.length)];
+        
+        
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        
+        const rotStart = randomRange(-45, 45);
+        const rotEnd = rotStart + randomRange(-90, 90);
+        el.style.setProperty('--rot-start', `${rotStart}deg`);
+        el.style.setProperty('--rot-end', `${rotEnd}deg`);
+
+        container.appendChild(el);
+
+        
+        el.addEventListener('animationend', () => el.remove());
+    }
+
+    
+    function spawnSmash() {
+        const el = document.createElement('div');
+        const isText = Math.random() > 0.8; 
+        
+        el.classList.add('entity');
+        
+        
+        const x = randomRange(10, 90);
+        const y = randomRange(10, 80);
+        el.style.left = `${x}vw`;
+        el.style.top = `${y}vh`;
+
+        
+        el.style.setProperty('--rot-start', `${randomRange(-30, 30)}deg`);
+        el.style.setProperty('--rot-mid', `${randomRange(-45, 45)}deg`);
+        el.style.setProperty('--rot-end', `${randomRange(-180, 180)}deg`);
+
+        if (isText) {
+            el.classList.add('text-pop');
+            el.innerText = words[Math.floor(Math.random() * words.length)];
+            const color = getRandomColor();
+            
+            el.style.textShadow = `
+                4px 4px 0 ${color},
+                -4px -4px 0 ${color},
+                4px -4px 0 ${color},
+                -4px 4px 0 ${color},
+                0 15px 0 rgba(0,0,0,0.3)
+            `;
+            playMeowSlide();
+        } else {
+            el.classList.add('smash');
+            el.innerText = cats[Math.floor(Math.random() * cats.length)];
+            
+            el.style.fontSize = `${randomRange(8, 20)}rem`;
+            playPop();
+        }
+
+        container.appendChild(el);
+
+        
+        el.addEventListener('animationend', () => el.remove());
+    }
+
+    function checkFrenzy() {
+        keyPressCount++;
+        clearTimeout(frenzyTimer);
+        
+        if (keyPressCount > 12) {
+            
+            frenzyFlash.classList.add('frenzy-active');
+            playMeowSlide();
+            for(let i=0; i<8; i++) {
+                setTimeout(spawnSmash, i * 50);
+            }
+            keyPressCount = 0;
+            setTimeout(() => frenzyFlash.classList.remove('frenzy-active'), 100);
+        }
+
+        frenzyTimer = setTimeout(() => {
+            keyPressCount = 0;
+        }, 800);
+    }
+
+    
+
+    
+    window.addEventListener('mousemove', (e) => {
+        hidePrompt();
+        const now = Date.now();
+        if (now - lastMouseTime > 30) { 
+            spawnTrail(e.clientX, e.clientY);
+            lastMouseTime = now;
+            
+            
+            if(Math.random() > 0.8 && audioCtx) {
+                playPop(); 
+            }
+        }
+    });
+
+    
+    window.addEventListener('touchmove', (e) => {
+        hidePrompt();
+        const now = Date.now();
+        if (now - lastMouseTime > 30) {
+            const touch = e.touches[0];
+            spawnTrail(touch.clientX, touch.clientY);
+            lastMouseTime = now;
+        }
+    }, { passive: false });
+
+    
+    window.addEventListener('keydown', (e) => {
+        
+        
+        if (!e.key.startsWith('F') && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault(); 
+        }
+        
+        hidePrompt();
+        spawnSmash();
+        checkFrenzy();
+    });
+    
+    
+    window.addEventListener('touchstart', (e) => {
+        hidePrompt();
+        spawnSmash();
+        checkFrenzy();
+    }, { passive: false });
+
+</script>
+
+</body></html>

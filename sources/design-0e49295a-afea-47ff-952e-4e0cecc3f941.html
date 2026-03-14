@@ -1,0 +1,543 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" vid="3">
+    <title vid="4">Kitty Mash - Papercraft Playground</title>
+    
+    <style vid="5">
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+        :root {
+            --sky: #00B4EB;
+            --night: #0A254C;
+            --yellow: #FFD100;
+            --orange: #FF6B00;
+            --pink: #FF2A55;
+            --green-light: #62C227;
+            --green-dark: #1A932E;
+            --white: #FDFDFD;
+            
+            
+            --paper-shadow: drop-shadow(4px 8px 6px rgba(0, 20, 50, 0.25)) drop-shadow(1px 2px 1px rgba(0, 0, 0, 0.15));
+            --text-shadow-thick: 0px 6px 0px rgba(0,0,0,0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-drag: none;
+            touch-action: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-color: var(--sky);
+            font-family: 'Fredoka One', cursive;
+            cursor: crosshair;
+        }
+
+        
+        #stage {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .sun-container {
+            position: absolute;
+            top: 10vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 400px;
+            filter: var(--paper-shadow);
+            animation: rotateSlow 60s linear infinite;
+        }
+
+        .sun-layer {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+        }
+
+        .sun-1 { width: 100%; height: 100%; background: var(--pink); clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+        .sun-2 { width: 80%; height: 80%; background: var(--orange); border-radius: 50%; }
+        .sun-3 { width: 60%; height: 60%; background: var(--yellow); border-radius: 50%; border: 10px dashed var(--white); }
+
+        .clouds {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 300px;
+        }
+
+        .cloud {
+            position: absolute;
+            background: var(--white);
+            border-radius: 100px;
+            filter: var(--paper-shadow);
+        }
+        .cloud::before, .cloud::after {
+            content: '';
+            position: absolute;
+            background: var(--white);
+            border-radius: 50%;
+        }
+        .c1 { top: 5%; left: 10%; width: 200px; height: 60px; }
+        .c1::before { width: 100px; height: 100px; top: -50px; left: 20px; }
+        .c1::after { width: 80px; height: 80px; top: -30px; right: 20px; }
+        
+        .c2 { top: 15%; right: 5%; width: 250px; height: 80px; transform: scale(0.8); }
+        .c2::before { width: 120px; height: 120px; top: -60px; left: 30px; }
+        .c2::after { width: 90px; height: 90px; top: -40px; right: 30px; }
+
+        .hills {
+            position: absolute;
+            bottom: -50px; left: 0; width: 100%; height: 30vh;
+            display: flex;
+            align-items: flex-end;
+            filter: var(--paper-shadow);
+        }
+
+        .hill {
+            position: absolute;
+            bottom: 0;
+            border-radius: 50% 50% 0 0;
+        }
+        .hill-back { width: 120vw; height: 35vh; left: -10vw; background: var(--green-dark); }
+        .hill-front-1 { width: 60vw; height: 25vh; left: -10vw; background: var(--green-light); }
+        .hill-front-2 { width: 70vw; height: 20vh; right: -10vw; background: var(--yellow); filter: brightness(0.9); }
+
+        
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .banner {
+            background: var(--white);
+            padding: 20px 60px;
+            border-radius: 100px;
+            filter: var(--paper-shadow);
+            text-align: center;
+            position: relative;
+            transform: rotate(-3deg);
+            animation: floatBanner 3s ease-in-out infinite alternate;
+        }
+
+        .banner::before {
+            content: '';
+            position: absolute;
+            top: 10px; left: 10px; right: 10px; bottom: 10px;
+            border: 4px dashed var(--sky);
+            border-radius: 90px;
+            pointer-events: none;
+        }
+
+        .banner h1 {
+            margin: 0;
+            font-size: 5vw;
+            color: var(--pink);
+            text-shadow: 2px 4px 0px rgba(0,0,0,0.1);
+            line-height: 1;
+            letter-spacing: 2px;
+        }
+        .banner p {
+            margin: 10px 0 0 0;
+            font-size: 2vw;
+            color: var(--orange);
+        }
+
+        .ribbon {
+            position: absolute;
+            bottom: -20px; left: 50%;
+            transform: translateX(-50%);
+            background: var(--yellow);
+            padding: 10px 40px;
+            font-size: 1.5vw;
+            color: var(--night);
+            clip-path: polygon(10% 0, 90% 0, 100% 50%, 90% 100%, 10% 100%, 0 50%);
+        }
+
+        
+        #canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 50;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            transform-origin: center center;
+            filter: var(--paper-shadow);
+            will-change: transform, opacity;
+        }
+
+        
+        .sticker-border {
+            stroke: var(--white);
+            stroke-width: 8px;
+            stroke-linejoin: round;
+        }
+
+        
+        .text-particle {
+            font-size: clamp(40px, 8vw, 120px);
+            color: var(--white);
+            text-shadow: 
+                -3px -3px 0 #000,  
+                 3px -3px 0 #000,
+                -3px  3px 0 #000,
+                 3px  3px 0 #000,
+                 0px  8px 0 rgba(0,0,0,0.2);
+            -webkit-text-stroke: 2px var(--night);
+            white-space: nowrap;
+        }
+
+        
+        @keyframes rotateSlow { 100% { transform: translateX(-50%) rotate(360deg); } }
+        @keyframes floatBanner { 0% { transform: translateY(-10px) rotate(-2deg); } 100% { transform: translateY(10px) rotate(2deg); } }
+        
+        @keyframes popInOut {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(var(--rot-start)); opacity: 1; }
+            20% { transform: translate(-50%, -50%) scale(1.2) rotate(var(--rot-mid)); }
+            30% { transform: translate(-50%, -50%) scale(1) rotate(var(--rot-mid)); }
+            80% { transform: translate(-50%, -50%) scale(1) rotate(var(--rot-mid)); opacity: 1; }
+            100% { transform: translate(-50%, calc(-50% + 100px)) scale(0.5) rotate(var(--rot-end)); opacity: 0; }
+        }
+
+        @keyframes explodeUp {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            10% { transform: translate(-50%, calc(-50% - 50px)) scale(1.5) rotate(var(--rot-mid)); }
+            100% { transform: translate(calc(-50% + var(--move-x)), calc(-50% + 400px)) scale(0.8) rotate(var(--rot-end)); opacity: 0; }
+        }
+
+        @keyframes splash {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+
+    </style>
+</head>
+<body vid="6">
+
+    
+    <div id="stage" vid="7">
+        <div class="sun-container" vid="8">
+            <div class="sun-layer sun-1" vid="9"></div>
+            <div class="sun-layer sun-2" vid="10"></div>
+            <div class="sun-layer sun-3" vid="11"></div>
+        </div>
+        <div class="clouds" vid="12">
+            <div class="cloud c1" vid="13"></div>
+            <div class="cloud c2" vid="14"></div>
+        </div>
+        <div class="hills" vid="15">
+            <div class="hill hill-back" vid="16"></div>
+            <div class="hill hill-front-1" vid="17"></div>
+            <div class="hill hill-front-2" vid="18"></div>
+        </div>
+    </div>
+
+    
+    <div id="canvas" vid="19"></div>
+
+    
+    <div id="ui-layer" vid="20">
+        <div class="banner" vid="21">
+            <h1 vid="22">MASH IT!</h1>
+            <p vid="23">⌨️ Keyboard &amp; 🖱️ Mouse</p>
+            <div class="ribbon" vid="24">GO CRAZY</div>
+        </div>
+    </div>
+
+    <script vid="25">
+        
+        
+        
+
+        const colors = ['#FFD100', '#FF6B00', '#FF2A55', '#62C227', '#00B4EB', '#FFFFFF'];
+        
+        const svgs = {
+            catFace: (color) => `
+                <svg width="150" height="150" viewBox="0 0 100 100" class="sticker-border">
+                    <polygon points="10,40 20,10 40,30" fill="${color}" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+                    <polygon points="90,40 80,10 60,30" fill="${color}" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+                    <circle cx="50" cy="60" r="40" fill="${color}" stroke="#fff" stroke-width="4"/>
+                    <circle cx="35" cy="55" r="5" fill="#0A254C" />
+                    <circle cx="65" cy="55" r="5" fill="#0A254C" />
+                    <polygon points="45,65 55,65 50,70" fill="#FF2A55" />
+                    <path d="M 50 70 Q 40 80 30 70 M 50 70 Q 60 80 70 70" fill="none" stroke="#0A254C" stroke-width="3" stroke-linecap="round"/>
+                    <line x1="10" y1="55" x2="25" y2="60" stroke="#0A254C" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="5" y1="65" x2="25" y2="65" stroke="#0A254C" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="90" y1="55" x2="75" y2="60" stroke="#0A254C" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="95" y1="65" x2="75" y2="65" stroke="#0A254C" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            `,
+            paw: (color) => `
+                <svg width="100" height="100" viewBox="0 0 100 100" class="sticker-border">
+                    <circle cx="25" cy="30" r="12" fill="${color}" stroke="#fff" stroke-width="4"/>
+                    <circle cx="50" cy="15" r="14" fill="${color}" stroke="#fff" stroke-width="4"/>
+                    <circle cx="75" cy="30" r="12" fill="${color}" stroke="#fff" stroke-width="4"/>
+                    <path d="M 20 60 C 20 40, 80 40, 80 60 C 80 80, 60 90, 50 90 C 40 90, 20 80, 20 60 Z" fill="${color}" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+                </svg>
+            `,
+            fish: (color) => `
+                <svg width="120" height="80" viewBox="0 0 120 80" class="sticker-border">
+                    <polygon points="10,40 30,20 30,60" fill="${color}" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+                    <ellipse cx="70" cy="40" rx="40" ry="25" fill="${color}" stroke="#fff" stroke-width="4"/>
+                    <circle cx="95" cy="35" r="4" fill="#0A254C"/>
+                    <path d="M 50 20 Q 60 10 70 20" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+            `,
+            starBurst: (color) => `
+                <svg width="100" height="100" viewBox="0 0 100 100" class="sticker-border">
+                    <polygon points="50,5 61,35 98,35 68,57 79,91 50,70 21,91 32,57 2,35 39,35" fill="${color}" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+                    <circle cx="50" cy="50" r="15" fill="#fff" />
+                    <circle cx="50" cy="50" r="8" fill="#0A254C" />
+                </svg>
+            `,
+            yarn: (color) => `
+                <svg width="100" height="100" viewBox="0 0 100 100" class="sticker-border">
+                    <circle cx="50" cy="50" r="40" fill="${color}" stroke="#fff" stroke-width="4"/>
+                    <path d="M 20 30 Q 50 10 80 40" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+                    <path d="M 15 50 Q 50 70 85 50" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+                    <path d="M 30 80 Q 50 50 70 85" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+                    <path d="M 40 15 Q 60 50 30 85" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+            `
+        };
+
+        const words = ["MEOOOW!", "PURRR", "SQUISH!", "BOP!", "MASH!", "BOING!", "YAY!"];
+
+        
+        
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'pop') {
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400 + Math.random() * 400, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'meow') {
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600 + Math.random() * 200, now);
+                osc.frequency.linearRampToValueAtTime(800 + Math.random() * 300, now + 0.1);
+                osc.frequency.linearRampToValueAtTime(400, now + 0.3);
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.3, now + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'chord') {
+                
+                osc.type = 'square';
+                const baseFreq = 200 + Math.random() * 200;
+                osc.frequency.setValueAtTime(baseFreq, now);
+                
+                const osc2 = audioCtx.createOscillator();
+                osc2.type = 'square';
+                osc2.frequency.setValueAtTime(baseFreq * 1.5, now); 
+                osc2.connect(gainNode);
+                osc2.start(now);
+                osc2.stop(now + 0.2);
+
+                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            }
+        }
+
+        
+        const canvas = document.getElementById('canvas');
+        const uiLayer = document.getElementById('ui-layer');
+        let uiHidden = false;
+
+        function getRandomColor() {
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function hideUI() {
+            if (!uiHidden) {
+                uiLayer.style.opacity = '0';
+                uiHidden = true;
+                initAudio(); 
+            }
+        }
+
+        function createConcentricSplash(x, y, color) {
+            const splash = document.createElement('div');
+            splash.className = 'particle';
+            splash.style.left = `${x}px`;
+            splash.style.top = `${y}px`;
+            splash.style.width = '100px';
+            splash.style.height = '100px';
+            splash.style.borderRadius = '50%';
+            splash.style.border = `15px solid ${color}`;
+            splash.style.zIndex = Math.floor(Math.random() * 10);
+            splash.style.animation = `splash 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards`;
+            
+            canvas.appendChild(splash);
+            setTimeout(() => splash.remove(), 600);
+        }
+
+        function spawnElement(x, y, isHeavy = false) {
+            hideUI();
+
+            const el = document.createElement('div');
+            el.className = 'particle';
+            
+            
+            const rotStart = Math.random() * 180 - 90;
+            const rotMid = rotStart + (Math.random() * 90 - 45);
+            const rotEnd = rotMid + (Math.random() * 180 - 90);
+            const moveX = (Math.random() * 400 - 200) + 'px';
+            
+            el.style.setProperty('--rot-start', `${rotStart}deg`);
+            el.style.setProperty('--rot-mid', `${rotMid}deg`);
+            el.style.setProperty('--rot-end', `${rotEnd}deg`);
+            el.style.setProperty('--move-x', moveX);
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            el.style.zIndex = Math.floor(Math.random() * 100) + 50;
+
+            const color = getRandomColor();
+            
+            
+            const rand = Math.random();
+            let animDuration = isHeavy ? 1.5 : 1;
+            let animType = isHeavy ? 'explodeUp' : 'popInOut';
+
+            if (isHeavy && rand > 0.6) {
+                
+                el.classList.add('text-particle');
+                el.textContent = words[Math.floor(Math.random() * words.length)];
+                
+                el.style.color = Math.random() > 0.5 ? varColor('--yellow') : varColor('--pink');
+                playSound('chord');
+                createConcentricSplash(x, y, varColor('--sky'));
+            } else {
+                
+                const svgTypes = Object.keys(svgs);
+                const type = svgTypes[Math.floor(Math.random() * svgTypes.length)];
+                el.innerHTML = svgs[type](color);
+                
+                
+                const scale = isHeavy ? (1 + Math.random() * 0.5) : (0.5 + Math.random() * 0.5);
+                el.style.transform = `scale(${scale})`; 
+
+                if (type === 'catFace') playSound('meow');
+                else playSound('pop');
+            }
+
+            el.style.animation = `${animType} ${animDuration}s cubic-bezier(0.34, 1.56, 0.64, 1) forwards`;
+            
+            canvas.appendChild(el);
+
+            
+            setTimeout(() => {
+                if (canvas.contains(el)) el.remove();
+            }, animDuration * 1000);
+        }
+
+        
+        function varColor(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        
+
+        
+        let lastSpawnTime = 0;
+        window.addEventListener('mousemove', (e) => {
+            const now = Date.now();
+            if (now - lastSpawnTime > 60) { 
+                
+                const rx = e.clientX + (Math.random() * 40 - 20);
+                const ry = e.clientY + (Math.random() * 40 - 20);
+                spawnElement(rx, ry, false);
+                lastSpawnTime = now;
+            }
+        });
+
+        
+        window.addEventListener('mousedown', (e) => {
+            initAudio();
+            for(let i=0; i<3; i++) {
+                setTimeout(() => {
+                    spawnElement(e.clientX, e.clientY, true);
+                }, i * 50);
+            }
+            
+            document.body.style.backgroundColor = varColor('--yellow');
+            setTimeout(() => document.body.style.backgroundColor = varColor('--sky'), 50);
+        });
+
+        
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return; 
+            initAudio();
+            
+            
+            const count = Math.floor(Math.random() * 3) + 2;
+            for(let i=0; i<count; i++) {
+                const rx = Math.random() * window.innerWidth;
+                const ry = Math.random() * window.innerHeight;
+                setTimeout(() => {
+                    spawnElement(rx, ry, true);
+                }, Math.random() * 100); 
+            }
+
+            
+            if(Math.random() > 0.8) {
+                const bgColors = [varColor('--sky'), varColor('--pink'), varColor('--green-light')];
+                document.body.style.backgroundColor = bgColors[Math.floor(Math.random() * bgColors.length)];
+                setTimeout(() => document.body.style.backgroundColor = varColor('--sky'), 150);
+            }
+        });
+
+        
+        window.addEventListener('resize', () => {
+            
+            
+        });
+
+    </script>
+
+</body></html>

@@ -1,0 +1,431 @@
+<html lang="en" vid="0"><head vid="1">
+<meta charset="UTF-8" vid="2">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+<title vid="4">Kitty Chaos / Masher</title>
+<style vid="5">
+    :root {
+        --bg: #f4f5f0;
+        --ink: #1a1a1a;
+        --red: #e63946;
+        --yellow: #ffca3a;
+        --blue: #1d3557;
+        --green: #2a9d8f;
+        --pink: #ffb5a7;
+        
+        --font-mono: 'Courier New', Courier, monospace;
+        --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+        box-sizing: border-box;
+        user-select: none;
+        -webkit-user-drag: none;
+    }
+
+    body, html {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: var(--bg);
+        color: var(--ink);
+        font-family: var(--font-sans);
+        overflow: hidden;
+        cursor: crosshair;
+    }
+
+    
+    .packaging-grid {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 10;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto 1fr auto;
+        padding: 2rem;
+    }
+
+    .meta-text {
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        line-height: 1.4;
+    }
+
+    .header-left { align-self: start; justify-self: start; }
+    .header-right { align-self: start; justify-self: end; text-align: right; }
+    
+    .center-logo {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        align-self: center;
+        justify-self: center;
+        text-align: center;
+        mix-blend-mode: multiply;
+        opacity: 0.1;
+        transform: scale(1.5);
+    }
+
+    .center-logo h1 {
+        font-size: 8vw;
+        line-height: 0.8;
+        margin: 0;
+        letter-spacing: -0.04em;
+    }
+
+    .footer-left {
+        grid-column: 1;
+        grid-row: 3;
+        align-self: end;
+        display: flex;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+
+    .footer-right {
+        grid-column: 2;
+        grid-row: 3;
+        align-self: end;
+        justify-self: end;
+    }
+
+    .barcode {
+        display: flex;
+        height: 40px;
+        gap: 2px;
+        align-items: flex-end;
+    }
+    
+    .barcode-line { background: var(--ink); width: 2px; height: 100%; }
+    .barcode-line:nth-child(2n) { width: 4px; }
+    .barcode-line:nth-child(3n) { height: 80%; }
+    .barcode-line:nth-child(5n) { width: 1px; }
+
+    .crosshair {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+    }
+    .crosshair::before, .crosshair::after {
+        content: '';
+        position: absolute;
+        background: var(--ink);
+    }
+    .crosshair::before { width: 100%; height: 1px; top: 50%; left: 0; }
+    .crosshair::after { height: 100%; width: 1px; left: 50%; top: 0; }
+    
+    .ch-tl { top: 2rem; left: 2rem; }
+    .ch-tr { top: 2rem; right: 2rem; }
+    .ch-bl { bottom: 2rem; left: 2rem; }
+    .ch-br { bottom: 2rem; right: 2rem; }
+
+    
+    #canvas-container {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        overflow: hidden;
+    }
+
+    .stamp {
+        position: absolute;
+        transform-origin: center center;
+        will-change: transform, opacity;
+        pointer-events: none;
+    }
+
+    
+    @keyframes popIn {
+        0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+        60% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+        100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+        to { opacity: 0; transform: scale(0.8) translateY(20px); }
+    }
+
+    .animate-pop {
+        animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    .animate-fade {
+        animation: fadeOut 1s ease-out forwards;
+    }
+
+    
+    .fill-red { fill: var(--red); color: var(--red); }
+    .fill-yellow { fill: var(--yellow); color: var(--yellow); }
+    .fill-blue { fill: var(--blue); color: var(--blue); }
+    .fill-green { fill: var(--green); color: var(--green); }
+    .fill-pink { fill: var(--pink); color: var(--pink); }
+    
+    .stroke-ink { stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; }
+    
+    #instruction {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 20;
+        background: var(--ink);
+        color: var(--bg);
+        padding: 1rem 2rem;
+        border-radius: 100px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+    }
+
+</style>
+</head>
+<body vid="6">
+
+    <div id="instruction" vid="7">Mash Keys &amp; Move Mouse</div>
+
+    <div class="packaging-grid" vid="8">
+        <div class="crosshair ch-tl" vid="9"></div>
+        <div class="crosshair ch-tr" vid="10"></div>
+        <div class="crosshair ch-bl" vid="11"></div>
+        <div class="crosshair ch-br" vid="12"></div>
+
+        <div class="header-left meta-text" vid="13">
+            MASH + MOVE EXTRACTS<br vid="14">
+            VITAMIN C DERIVATIVE<br vid="15">
+            PURE FELINE ENERGY<br vid="16">
+            PLANT-DERIVED CHAOS
+        </div>
+
+        <div class="header-right meta-text" vid="17">
+            PRO-GRADE INTERACTIVE FOR ALL<br vid="18">
+            SUPERFOODS + SCIENCE™<br vid="19">
+            100% VEGAN PIXELS<br vid="20">
+            CREATED IN BROWSER
+        </div>
+
+        <div class="center-logo" vid="21">
+            <h1 vid="22">KALE +<br vid="23">KITTENS<br vid="24">SPINACH<br vid="25">+ MASH</h1>
+        </div>
+
+        <div class="footer-left meta-text" vid="26">
+            <div class="barcode" vid="27">
+                <div class="barcode-line" vid="28"></div><div class="barcode-line" vid="29"></div><div class="barcode-line" vid="30"></div>
+                <div class="barcode-line" vid="31"></div><div class="barcode-line" vid="32"></div><div class="barcode-line" vid="33"></div>
+                <div class="barcode-line" vid="34"></div><div class="barcode-line" vid="35"></div><div class="barcode-line" vid="36"></div>
+                <div class="barcode-line" vid="37"></div><div class="barcode-line" vid="38"></div><div class="barcode-line" vid="39"></div>
+            </div>
+            <div vid="40">
+                YOUTH TO THE MACHINE<br vid="41">
+                VOL. 1 • 237 ML
+            </div>
+        </div>
+
+        <div class="footer-right meta-text" vid="42">
+            PLEASE RECYCLE<br vid="43">THIS SESSION
+        </div>
+    </div>
+
+    <div id="canvas-container" vid="44"></div>
+
+<script vid="45">
+    
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let actx;
+
+    function initAudio() {
+        if (!actx) actx = new AudioContext();
+        if (actx.state === 'suspended') actx.resume();
+    }
+
+    function playSound(type) {
+        if (!actx) return;
+        
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(actx.destination);
+        
+        const now = actx.currentTime;
+        
+        if (type === 'mash') {
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400 + Math.random() * 400, now);
+            osc.frequency.exponentialRampToValueAtTime(800 + Math.random() * 200, now + 0.1);
+            
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.3, now + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            
+            osc.start(now);
+            osc.stop(now + 0.3);
+        } else {
+            
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(800 + Math.random() * 1000, now);
+            
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.1, now + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            
+            osc.start(now);
+            osc.stop(now + 0.1);
+        }
+    }
+
+    
+    const colors = ['red', 'yellow', 'blue', 'green', 'pink'];
+    
+    const shapes = [
+        
+        `<svg viewBox="0 0 100 100" width="100%" height="100%"><path class="stroke-ink" d="M15,40 C10,20 20,10 30,20 C40,15 60,15 70,20 C80,10 90,20 85,40 C95,60 90,80 50,85 C10,80 5,60 15,40 Z" fill="currentColor"/><circle cx="35" cy="50" r="5" fill="#1a1a1a"/><circle cx="65" cy="50" r="5" fill="#1a1a1a"/><path class="stroke-ink" d="M45,60 Q50,65 55,60" fill="none"/></svg>`,
+        
+        `<svg viewBox="0 0 150 50" width="100%" height="100%"><rect class="stroke-ink" x="10" y="10" width="130" height="30" rx="15" fill="currentColor"/><circle cx="25" cy="25" r="5" fill="#1a1a1a"/><circle cx="135" cy="25" r="5" fill="#1a1a1a"/><path class="stroke-ink" d="M20,10 L15,0 L30,5 Z" fill="currentColor"/><path class="stroke-ink" d="M130,10 L135,0 L120,5 Z" fill="currentColor"/></svg>`,
+        
+        `<svg viewBox="0 0 100 100" width="100%" height="100%"><path class="stroke-ink" d="M50,10 C60,30 80,20 70,40 C90,50 80,70 60,60 C50,80 30,90 40,70 C20,60 10,40 30,50 C20,30 40,20 50,10 Z" fill="currentColor"/></svg>`,
+        
+        `<svg viewBox="0 0 100 100" width="100%" height="100%"><polygon class="stroke-ink" points="50,10 65,40 95,45 70,65 80,95 50,75 20,95 30,65 5,45 35,40" fill="currentColor"/></svg>`,
+        
+        `<svg viewBox="0 0 80 80" width="100%" height="100%"><circle cx="40" cy="50" r="20" class="stroke-ink" fill="currentColor"/><circle cx="20" cy="25" r="10" class="stroke-ink" fill="currentColor"/><circle cx="40" cy="15" r="12" class="stroke-ink" fill="currentColor"/><circle cx="60" cy="25" r="10" class="stroke-ink" fill="currentColor"/></svg>`,
+        
+        `<svg viewBox="0 0 100 100" width="100%" height="100%"><circle cx="50" cy="50" r="40" fill="currentColor"/><path class="stroke-ink" d="M20,40 Q50,10 80,50 T30,80 T70,30 T20,60" fill="none"/></svg>`,
+        
+        `<svg viewBox="0 0 100 60" width="100%" height="100%"><path class="stroke-ink" d="M10,30 C10,10 40,-10 70,10 C90,20 100,50 70,50 C40,50 10,60 10,30 Z" fill="currentColor"/></svg>`
+    ];
+
+    
+    const container = document.getElementById('canvas-container');
+    const instruction = document.getElementById('instruction');
+    let hasStarted = false;
+    let elementCount = 0;
+    const MAX_ELEMENTS = 150; 
+    
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+
+    function createStamp(x, y, isBig) {
+        if (!hasStarted) {
+            hasStarted = true;
+            instruction.style.opacity = '0';
+            initAudio();
+        }
+
+        const stamp = document.createElement('div');
+        stamp.classList.add('stamp', 'animate-pop');
+        
+        
+        const shapeSvg = shapes[Math.floor(Math.random() * shapes.length)];
+        const colorClass = `fill-${colors[Math.floor(Math.random() * colors.length)]}`;
+        
+        stamp.innerHTML = shapeSvg;
+        
+        
+        const svg = stamp.querySelector('svg');
+        if(svg) svg.classList.add(colorClass);
+
+        
+        const baseSize = isBig ? (100 + Math.random() * 150) : (20 + Math.random() * 40);
+        const size = baseSize + 'px';
+        stamp.style.width = size;
+        stamp.style.height = size;
+        
+        
+        stamp.style.left = `calc(${x}px - ${baseSize/2}px)`;
+        stamp.style.top = `calc(${y}px - ${baseSize/2}px)`;
+        
+        
+        const rot = (Math.random() - 0.5) * 360;
+        stamp.style.transform = `rotate(${rot}deg)`;
+        
+        
+        stamp.style.zIndex = Math.floor(Math.random() * 100);
+
+        container.appendChild(stamp);
+        elementCount++;
+
+        
+        if (elementCount > MAX_ELEMENTS) {
+            const oldest = container.firstChild;
+            if (oldest) {
+                oldest.classList.remove('animate-pop');
+                oldest.classList.add('animate-fade');
+                setTimeout(() => {
+                    if(oldest.parentNode) oldest.remove();
+                    elementCount--;
+                }, 1000);
+            }
+        }
+    }
+
+    
+
+    
+    window.addEventListener('keydown', (e) => {
+        if (e.repeat) return; 
+        initAudio();
+        playSound('mash');
+        
+        
+        const rx = Math.random() * window.innerWidth;
+        const ry = Math.random() * window.innerHeight;
+        createStamp(rx, ry, true);
+    });
+
+    
+    let lastMouseMoveTime = 0;
+    window.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        
+        const now = Date.now();
+        if (now - lastMouseMoveTime > 40) { 
+            if (hasStarted) { 
+                playSound('tick');
+                
+                const scatterX = mouseX + (Math.random() - 0.5) * 40;
+                const scatterY = mouseY + (Math.random() - 0.5) * 40;
+                createStamp(scatterX, scatterY, false);
+            }
+            lastMouseMoveTime = now;
+        }
+    });
+
+    
+    window.addEventListener('mousedown', (e) => {
+        initAudio();
+        playSound('mash');
+        createStamp(e.clientX, e.clientY, true);
+    });
+
+    
+    window.addEventListener('touchmove', (e) => {
+        e.preventDefault(); 
+        if(e.touches.length > 0) {
+             const now = Date.now();
+            if (now - lastMouseMoveTime > 40) {
+                playSound('tick');
+                const touch = e.touches[0];
+                const scatterX = touch.clientX + (Math.random() - 0.5) * 40;
+                const scatterY = touch.clientY + (Math.random() - 0.5) * 40;
+                createStamp(scatterX, scatterY, false);
+                lastMouseMoveTime = now;
+            }
+        }
+    }, {passive: false});
+
+    window.addEventListener('touchstart', (e) => {
+        initAudio();
+        playSound('mash');
+        if(e.touches.length > 0) {
+            createStamp(e.touches[0].clientX, e.touches[0].clientY, true);
+        }
+    });
+
+</script>
+
+</body></html>

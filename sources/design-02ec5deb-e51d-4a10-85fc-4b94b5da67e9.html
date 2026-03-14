@@ -1,0 +1,534 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" vid="3">
+    <title vid="4">CAT MASH CHAOS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="5">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="6">
+    <link href="https://fonts.googleapis.com/css2?family=Titan+One&amp;display=swap" rel="stylesheet" vid="7">
+    <style vid="8">
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #060709;
+            overflow: hidden;
+            font-family: 'Titan One', cursive;
+            cursor: crosshair;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            background-color: rgba(6, 7, 9, 0.85);
+            backdrop-filter: blur(5px);
+            transition: opacity 0.5s ease;
+            text-align: center;
+        }
+
+        .title-word {
+            font-size: clamp(4rem, 10vw, 12rem);
+            line-height: 0.8;
+            letter-spacing: -0.05em;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .title-word span {
+            display: inline-block;
+            transform-origin: center;
+            text-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .subtitle {
+            margin-top: 2rem;
+            font-size: clamp(1.5rem, 3vw, 3rem);
+            color: #FFFFFF;
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.05); opacity: 1; }
+        }
+
+        
+        .c-blue { color: #1753EB; }
+        .c-red { color: #E83319; }
+        .c-yellow { color: #F4B30F; }
+        .c-green { color: #0B891A; }
+    </style>
+</head>
+<body vid="9">
+
+    <div id="start-screen" vid="10">
+        <div class="title-word" vid="11">
+            <span class="c-red" style="transform: rotate(-10deg) translateY(10px);" vid="12">M</span>
+            <span class="c-blue" style="transform: rotate(5deg);" vid="13">A</span>
+            <span class="c-yellow" style="transform: rotate(-5deg) translateY(-5px);" vid="14">S</span>
+            <span class="c-green" style="transform: rotate(15deg);" vid="15">H</span>
+        </div>
+        <div class="title-word" vid="16">
+            <span class="c-blue" style="transform: rotate(8deg);" vid="17">T</span>
+            <span class="c-red" style="transform: rotate(-12deg) translateY(5px);" vid="18">H</span>
+            <span class="c-green" style="transform: rotate(4deg);" vid="19">E</span>
+        </div>
+        <div class="title-word" vid="20">
+            <span class="c-yellow" style="transform: rotate(-8deg);" vid="21">K</span>
+            <span class="c-green" style="transform: rotate(12deg);" vid="22">E</span>
+            <span class="c-red" style="transform: rotate(-5deg) translateY(-10px);" vid="23">Y</span>
+            <span class="c-blue" style="transform: rotate(10deg);" vid="24">S</span>
+            <span class="c-red" style="transform: rotate(-15deg);" vid="25">!</span>
+        </div>
+        <div class="subtitle" vid="26">CLICK OR PRESS ANYTHING</div>
+    </div>
+
+    <canvas id="canvas" vid="27"></canvas>
+
+    <script vid="28">
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const startScreen = document.getElementById('start-screen');
+
+        let width, height;
+        let isPlaying = false;
+        let audioCtx;
+        
+        
+        const colors = ['#1753EB', '#E83319', '#F4B30F', '#0B891A'];
+        const words = ['MEOW!', 'PURR', 'HISS', 'MROW', 'YOWL', 'PSPSPS', 'BAP!'];
+
+        
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playWeirdSound() {
+            if (!audioCtx) return;
+            
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            
+            const types = ['square', 'sawtooth', 'triangle'];
+            osc.type = types[Math.floor(Math.random() * types.length)];
+            
+            
+            const baseFreq = [261.63, 293.66, 329.63, 392.00, 440.00][Math.floor(Math.random() * 5)];
+            const multiplier = Math.floor(Math.random() * 4) + 1; 
+            
+            osc.frequency.setValueAtTime(baseFreq * multiplier, audioCtx.currentTime);
+            
+            
+            if (Math.random() > 0.5) {
+                osc.frequency.exponentialRampToValueAtTime(
+                    (baseFreq * multiplier) * (Math.random() > 0.5 ? 2 : 0.5), 
+                    audioCtx.currentTime + 0.1
+                );
+            }
+
+            
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.02); 
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3); 
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }
+
+
+        
+        let entities = [];
+
+        class Entity {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 10;
+                this.vy = (Math.random() - 0.5) * 10 - 2; 
+                this.rotation = Math.random() * Math.PI * 2;
+                this.vr = (Math.random() - 0.5) * 0.2;
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.scale = 0;
+                this.targetScale = 1;
+                this.life = 1.0;
+                this.decayRate = 0.01 + Math.random() * 0.02;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.2; 
+                this.rotation += this.vr;
+                
+                
+                this.scale += (this.targetScale - this.scale) * 0.2;
+                
+                
+                this.life -= this.decayRate;
+                if(this.life < 0.2) {
+                    this.scale *= 0.9;
+                }
+            }
+        }
+
+        class WeirdCat extends Entity {
+            constructor(x, y, size) {
+                super(x, y);
+                this.targetScale = size;
+                this.eyeSize1 = 0.3 + Math.random() * 0.4;
+                this.eyeSize2 = 0.3 + Math.random() * 0.4;
+                this.pupilPos1X = (Math.random() - 0.5) * 0.5;
+                this.pupilPos1Y = (Math.random() - 0.5) * 0.5;
+                this.pupilPos2X = (Math.random() - 0.5) * 0.5;
+                this.pupilPos2Y = (Math.random() - 0.5) * 0.5;
+                this.hasBeak = Math.random() > 0.8; 
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.scale(this.scale, this.scale);
+
+                
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                
+                ctx.ellipse(0, 0, 50, 40, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                
+                ctx.beginPath();
+                ctx.moveTo(-40, -10);
+                ctx.lineTo(-60, -60);
+                ctx.lineTo(-10, -35);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(40, -10);
+                ctx.lineTo(60, -60);
+                ctx.lineTo(10, -35);
+                ctx.fill();
+
+                
+                ctx.fillStyle = '#FFFFFF';
+                
+                
+                ctx.beginPath();
+                ctx.arc(-20, -5, 50 * this.eyeSize1, 0, Math.PI * 2);
+                ctx.fill();
+                
+                
+                ctx.beginPath();
+                ctx.arc(20, -5, 50 * this.eyeSize2, 0, Math.PI * 2);
+                ctx.fill();
+
+                
+                ctx.fillStyle = '#060709';
+                
+                
+                ctx.beginPath();
+                const pr1 = 50 * this.eyeSize1 * 0.3;
+                ctx.arc(-20 + (50 * this.eyeSize1 * this.pupilPos1X), -5 + (50 * this.eyeSize1 * this.pupilPos1Y), pr1, 0, Math.PI * 2);
+                ctx.fill();
+
+                
+                ctx.beginPath();
+                const pr2 = 50 * this.eyeSize2 * 0.3;
+                ctx.arc(20 + (50 * this.eyeSize2 * this.pupilPos2X), -5 + (50 * this.eyeSize2 * this.pupilPos2Y), pr2, 0, Math.PI * 2);
+                ctx.fill();
+
+                
+                if(this.hasBeak) {
+                    ctx.fillStyle = '#F4B30F';
+                    ctx.beginPath();
+                    ctx.arc(0, 20, 15, 0, Math.PI);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        class Shape extends Entity {
+            constructor(x, y, size) {
+                super(x, y);
+                this.targetScale = size;
+                this.type = Math.floor(Math.random() * 3); 
+                
+                
+                this.cp1x = (Math.random() - 0.5) * 100;
+                this.cp1y = (Math.random() - 0.5) * 100;
+                this.cp2x = (Math.random() - 0.5) * 100;
+                this.cp2y = (Math.random() - 0.5) * 100;
+                this.ex = (Math.random() - 0.5) * 100;
+                this.ey = (Math.random() - 0.5) * 100;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.scale(this.scale, this.scale);
+                
+                ctx.fillStyle = this.color;
+                ctx.strokeStyle = this.color;
+
+                if (this.type === 0) {
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(0, -20);
+                    ctx.lineTo(20, 20);
+                    ctx.lineTo(-20, 20);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (this.type === 1) {
+                    
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    
+                    ctx.lineWidth = 15;
+                    ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    ctx.moveTo(-this.ex, -this.ey);
+                    ctx.bezierCurveTo(this.cp1x, this.cp1y, this.cp2x, this.cp2y, this.ex, this.ey);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+
+        class TextWord extends Entity {
+            constructor(x, y, text) {
+                super(x, y);
+                this.text = text;
+                this.targetScale = 1 + Math.random() * 1.5;
+                this.chars = [];
+                
+                
+                for(let i=0; i<this.text.length; i++) {
+                    this.chars.push({
+                        char: this.text[i],
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        rot: (Math.random() - 0.5) * 0.5,
+                        yOffset: (Math.random() - 0.5) * 20
+                    });
+                }
+                
+                this.vy = -Math.random() * 5 - 2;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.decayRate = 0.005 + Math.random() * 0.01; 
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.scale(this.scale, this.scale);
+                
+                ctx.rotate(this.rotation * 0.2); 
+
+                ctx.font = "80px 'Titan One'";
+                ctx.textBaseline = 'middle';
+                
+                let currentX = 0;
+
+                
+                for(let i=0; i<this.chars.length; i++) {
+                    let c = this.chars[i];
+                    ctx.save();
+                    ctx.translate(currentX, c.yOffset);
+                    ctx.rotate(c.rot);
+                    
+                    ctx.fillStyle = c.color;
+                    ctx.fillText(c.char, 0, 0);
+                    
+                    
+                    if(Math.random() > 0.8) {
+                         ctx.fillStyle = '#FFFFFF';
+                         ctx.beginPath();
+                         ctx.arc(20, -20, 15, 0, Math.PI * 2);
+                         ctx.fill();
+                         ctx.fillStyle = '#060709';
+                         ctx.beginPath();
+                         ctx.arc(20 + (Math.random()-0.5)*10, -20 + (Math.random()-0.5)*10, 5, 0, Math.PI * 2);
+                         ctx.fill();
+                    }
+
+                    ctx.restore();
+                    
+                    
+                    currentX += ctx.measureText(c.char).width * 0.9; 
+                }
+
+                ctx.restore();
+            }
+        }
+
+
+        
+        let lastMouseTime = 0;
+        
+        function handleStart() {
+            if (!isPlaying) {
+                isPlaying = true;
+                startScreen.style.opacity = 0;
+                setTimeout(() => startScreen.style.display = 'none', 500);
+                initAudio();
+                
+                
+                for(let i=0; i<20; i++) {
+                    spawnRandom(width/2, height/2, true);
+                }
+            }
+        }
+
+        function spawnRandom(x, y, isBig) {
+            const rand = Math.random();
+            if (isBig) {
+                if (rand > 0.5) {
+                    entities.push(new WeirdCat(x, y, 1.5 + Math.random() * 2));
+                } else {
+                    const word = words[Math.floor(Math.random() * words.length)];
+                    entities.push(new TextWord(x - 100, y, word)); 
+                }
+            } else {
+                if (rand > 0.7) {
+                    entities.push(new WeirdCat(x, y, 0.3 + Math.random() * 0.5));
+                } else {
+                    entities.push(new Shape(x, y, 0.5 + Math.random() * 1.5));
+                }
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            handleStart();
+            
+            const x = width * 0.2 + Math.random() * (width * 0.6);
+            const y = height * 0.2 + Math.random() * (height * 0.6);
+            spawnRandom(x, y, true);
+            playWeirdSound();
+        });
+
+        window.addEventListener('mousedown', (e) => {
+            handleStart();
+            spawnRandom(e.clientX, e.clientY, true);
+            playWeirdSound();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isPlaying) return;
+            
+            const now = Date.now();
+            
+            if (now - lastMouseTime > 20) { 
+                spawnRandom(e.clientX, e.clientY, false);
+                lastMouseTime = now;
+                
+                
+                if(Math.random() > 0.9) {
+                     playWeirdSound();
+                }
+            }
+        });
+
+        
+        window.addEventListener('touchstart', (e) => {
+             handleStart();
+             for(let i=0; i<e.touches.length; i++) {
+                 spawnRandom(e.touches[i].clientX, e.touches[i].clientY, true);
+                 playWeirdSound();
+             }
+        }, {passive: false});
+
+        window.addEventListener('touchmove', (e) => {
+             if(!isPlaying) return;
+             e.preventDefault(); 
+             const now = Date.now();
+             if (now - lastMouseTime > 30) {
+                 for(let i=0; i<e.touches.length; i++) {
+                     spawnRandom(e.touches[i].clientX, e.touches[i].clientY, false);
+                 }
+                 lastMouseTime = now;
+             }
+        }, {passive: false});
+
+
+        
+        function animate() {
+            
+            ctx.fillStyle = '#060709';
+            ctx.fillRect(0, 0, width, height);
+
+            
+            for (let i = entities.length - 1; i >= 0; i--) {
+                const ent = entities[i];
+                ent.update();
+                ent.draw(ctx);
+                
+                if (ent.life <= 0 || ent.scale < 0.01) {
+                    entities.splice(i, 1);
+                }
+            }
+
+            
+            if(entities.length > 300) {
+                entities.splice(0, entities.length - 300); 
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        
+        document.fonts.ready.then(() => {
+             animate();
+        });
+
+    </script>
+
+</body></html>

@@ -1,0 +1,415 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" vid="3">
+    <title vid="4">Kitty Mash - Interactive Canvas</title>
+    
+    <style vid="5">
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&display=swap');
+
+        :root {
+            --bg-base: #FFF5EB;
+            --splash-main: #FCAE39;
+            --splash-light: #FFC86B;
+            --accent-blue: #6DCDE6;
+            --accent-navy: #104C82;
+            --accent-coral: #E75C42;
+            --font-main: 'Fredoka', sans-serif;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-base);
+            overflow: hidden;
+            font-family: var(--font-main);
+            cursor: crosshair;
+            
+            touch-action: none;
+        }
+
+        
+        .bg-splash-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120vmin;
+            height: 120vmin;
+            z-index: 0;
+            opacity: 0.8;
+            pointer-events: none;
+            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .bg-splash-container.pulse {
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+
+        .bg-splash {
+            width: 100%;
+            height: 100%;
+            fill: var(--splash-main);
+            
+            filter: drop-shadow(0 0 40px rgba(252, 174, 57, 0.4));
+        }
+
+        
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        
+        .spawn-item {
+            position: absolute;
+            pointer-events: none;
+            will-change: transform, opacity;
+            filter: drop-shadow(2px 4px 0px rgba(16, 76, 130, 0.15));
+        }
+
+        
+        .trail-item {
+            font-size: clamp(1.5rem, 3vw, 2.5rem);
+            transform-origin: center;
+            animation: floatAway 1.2s ease-out forwards;
+        }
+
+        
+        .mash-item {
+            transform-origin: center;
+            animation: stickerPop 2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mash-text {
+            font-size: clamp(4rem, 10vw, 12rem);
+            font-weight: 700;
+            color: var(--accent-coral);
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            
+            -webkit-text-stroke: 3px var(--bg-base);
+            text-shadow: 4px 6px 0px rgba(231, 92, 66, 0.3);
+            white-space: nowrap;
+        }
+
+        .mash-emoji {
+            font-size: clamp(5rem, 15vw, 20rem);
+        }
+
+        .mash-svg {
+            width: clamp(100px, 25vw, 400px);
+            height: auto;
+        }
+
+        
+        @keyframes floatAway {
+            0% { 
+                transform: scale(0) rotate(var(--rot-start)) translate(0, 0); 
+                opacity: 1; 
+            }
+            20% {
+                transform: scale(1) rotate(var(--rot-start));
+            }
+            100% { 
+                transform: scale(0.5) rotate(var(--rot-end)) translate(var(--tx), var(--ty)); 
+                opacity: 0; 
+            }
+        }
+
+        @keyframes stickerPop {
+            0% { 
+                transform: scale(0) rotate(var(--rot-start)); 
+                opacity: 0; 
+            }
+            15% { 
+                transform: scale(1.2) rotate(var(--rot-mid)); 
+                opacity: 1; 
+            }
+            25% { 
+                transform: scale(0.95) rotate(var(--rot-mid)); 
+                opacity: 1; 
+            }
+            35% { 
+                transform: scale(1) rotate(var(--rot-mid)); 
+                opacity: 1; 
+            }
+            80% {
+                transform: scale(1) rotate(var(--rot-mid)) translateY(0);
+                opacity: 1;
+            }
+            100% { 
+                transform: scale(0.8) rotate(var(--rot-end)) translateY(100px); 
+                opacity: 0; 
+            }
+        }
+
+        
+        .hint {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--accent-navy);
+            opacity: 0.3;
+            font-size: 1rem;
+            z-index: 100;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        body.active .hint {
+            opacity: 0;
+        }
+    </style>
+</head>
+<body vid="6">
+
+    
+    <div class="bg-splash-container" id="bgSplash" vid="7">
+        <svg viewBox="0 0 200 200" class="bg-splash" vid="8">
+            
+            <path d="M45.7,-76.3C58.9,-69.3,69.2,-55.4,78.2,-40.8C87.2,-26.2,94.9,-10.9,94.1,4.2C93.3,19.3,83.9,34.1,72.2,46.1C60.5,58.1,46.5,67.3,31.2,74.5C15.9,81.7,-0.7,86.9,-16.9,84.6C-33.1,82.3,-48.9,72.5,-60.8,60C-72.7,47.5,-80.7,32.3,-84.8,16.2C-88.9,0.1,-89.1,-16.9,-83.4,-31.8C-77.7,-46.7,-66.1,-59.5,-52.1,-66.5C-38.1,-73.5,-21.7,-74.7,-4.8,-68.8C12.1,-62.9,24.2,-49.9,32.5,-83.2Z" transform="translate(100 100) scale(1.1)" vid="9"></path>
+        </svg>
+    </div>
+
+    <div id="canvas" vid="10"></div>
+
+    <div class="hint" id="hint" vid="11">Mash keyboard and move mouse!</div>
+
+    
+    <svg style="display:none;" vid="12">
+        
+        <g id="svg-planet" vid="13">
+            <circle cx="50" cy="50" r="30" fill="var(--accent-navy)" vid="14"></circle>
+            <path d="M10,50 Q50,70 90,50 Q50,30 10,50 Z" fill="none" stroke="var(--bg-base)" stroke-width="4" vid="15"></path>
+            <path d="M5,50 Q50,75 95,50" fill="none" stroke="var(--accent-navy)" stroke-width="2" vid="16"></path>
+        </g>
+        
+        <g id="svg-star" vid="17">
+            <path d="M50,10 L60,40 L90,50 L60,60 L50,90 L40,60 L10,50 L40,40 Z" fill="var(--splash-light)" vid="18"></path>
+        </g>
+        
+        <g id="svg-cat" vid="19">
+            <path d="M20,40 L30,10 L50,30 L70,10 L80,40 C95,50 95,80 80,90 C60,100 40,100 20,90 C5,80 5,50 20,40 Z" fill="var(--accent-blue)" vid="20"></path>
+            <circle cx="35" cy="55" r="5" fill="var(--accent-navy)" vid="21"></circle>
+            <circle cx="65" cy="55" r="5" fill="var(--accent-navy)" vid="22"></circle>
+            <path d="M45,65 Q50,70 55,65" fill="none" stroke="var(--accent-navy)" stroke-width="3" stroke-linecap="round" vid="23"></path>
+            <path d="M10,55 L25,60 M10,65 L25,65 M10,75 L25,70" stroke="var(--accent-navy)" stroke-width="2" stroke-linecap="round" vid="24"></path>
+            <path d="M90,55 L75,60 M90,65 L75,65 M90,75 L75,70" stroke="var(--accent-navy)" stroke-width="2" stroke-linecap="round" vid="25"></path>
+        </g>
+    </svg>
+
+    <script vid="26">
+        const canvas = document.getElementById('canvas');
+        const bgSplash = document.getElementById('bgSplash');
+        
+        
+        
+        const catEmojis = ['🐱', '🐈', '😸', '😻', '😹', '😽', '🙀', '🐾', '🧶', '🐟'];
+        const actionWords = ['MEOW!', 'PURRR', 'SPLAT!', 'BOOP!', 'ROAR!', 'YAY!', 'WEE!'];
+        const textColors = ['var(--accent-coral)', 'var(--accent-navy)', 'var(--accent-blue)', 'var(--splash-main)'];
+        const svgIds = ['svg-planet', 'svg-star', 'svg-cat'];
+        
+        
+        
+        
+        let audioCtx;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        
+        const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
+
+        function playBoop() {
+            if (!audioCtx) return;
+            
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            
+            const freq = notes[Math.floor(Math.random() * notes.length)];
+            
+            osc.type = Math.random() > 0.5 ? 'sine' : 'triangle';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        
+
+        function random(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function createEl(type, className) {
+            const el = document.createElement(type);
+            el.className = className;
+            return el;
+        }
+
+        
+        function hideHint() {
+            document.body.classList.add('active');
+        }
+
+        
+
+        
+        let lastMouseTime = 0;
+        
+        document.addEventListener('mousemove', (e) => {
+            hideHint();
+            initAudio();
+            
+            const now = Date.now();
+            
+            if (now - lastMouseTime < 40) return; 
+            lastMouseTime = now;
+
+            const el = createEl('div', 'spawn-item trail-item');
+            
+            
+            if (Math.random() > 0.3) {
+                el.innerText = catEmojis[Math.floor(Math.random() * catEmojis.length)];
+            } else {
+                
+                el.innerHTML = `<svg width="30" height="30" viewBox="0 0 100 100"><use href="#svg-star"></use></svg>`;
+            }
+
+            
+            el.style.left = `${e.clientX - 15}px`;
+            el.style.top = `${e.clientY - 15}px`;
+            
+            
+            el.style.setProperty('--rot-start', `${random(-45, 45)}deg`);
+            el.style.setProperty('--rot-end', `${random(-180, 180)}deg`);
+            el.style.setProperty('--tx', `${random(-100, 100)}px`);
+            el.style.setProperty('--ty', `${random(-50, -150)}px`); 
+
+            canvas.appendChild(el);
+            
+            
+            setTimeout(() => {
+                if(canvas.contains(el)) el.remove();
+            }, 1200);
+        });
+
+        
+        document.addEventListener('touchmove', (e) => {
+            
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent("mousemove", {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            document.dispatchEvent(mouseEvent);
+        }, { passive: false });
+
+
+        
+        const activeKeys = new Set();
+
+        document.addEventListener('keydown', (e) => {
+            
+            
+            if (!['F5', 'F12', 'Escape'].includes(e.key)) {
+                e.preventDefault();
+            }
+            
+            
+            if (activeKeys.has(e.code)) return;
+            activeKeys.add(e.code);
+
+            hideHint();
+            initAudio();
+            playBoop();
+
+            
+            bgSplash.classList.remove('pulse');
+            void bgSplash.offsetWidth; 
+            bgSplash.classList.add('pulse');
+
+            
+            const el = createEl('div', 'spawn-item mash-item');
+            
+            
+            const x = random(10, 90);
+            const y = random(10, 80);
+            el.style.left = `${x}vw`;
+            el.style.top = `${y}vh`;
+            
+            
+            el.style.setProperty('--rot-start', `${random(-60, 60)}deg`);
+            el.style.setProperty('--rot-mid', `${random(-15, 15)}deg`);
+            el.style.setProperty('--rot-end', `${random(-45, 45)}deg`);
+
+            
+            const r = Math.random();
+            if (r < 0.4) {
+                
+                const textEl = createEl('span', 'mash-text');
+                textEl.innerText = actionWords[Math.floor(Math.random() * actionWords.length)];
+                textEl.style.color = textColors[Math.floor(Math.random() * textColors.length)];
+                
+                textEl.style.webkitTextStrokeColor = Math.random() > 0.5 ? 'var(--bg-base)' : 'var(--splash-light)';
+                el.appendChild(textEl);
+            } else if (r < 0.7) {
+                
+                const svgId = svgIds[Math.floor(Math.random() * svgIds.length)];
+                el.innerHTML = `<svg class="mash-svg" viewBox="0 0 100 100"><use href="#${svgId}"></use></svg>`;
+            } else {
+                
+                const emojiEl = createEl('span', 'mash-emoji');
+                emojiEl.innerText = catEmojis[Math.floor(Math.random() * catEmojis.length)];
+                el.appendChild(emojiEl);
+            }
+
+            canvas.appendChild(el);
+
+            
+            setTimeout(() => {
+                if(canvas.contains(el)) el.remove();
+            }, 2000);
+        });
+
+        document.addEventListener('keyup', (e) => {
+            activeKeys.delete(e.code);
+        });
+
+        
+        document.addEventListener('contextmenu', e => e.preventDefault());
+
+    </script>
+
+</body></html>

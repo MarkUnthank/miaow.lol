@@ -1,0 +1,427 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" vid="3">
+    <title vid="4">Chaos Kitties</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="5">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="6">
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&amp;display=swap" rel="stylesheet" vid="7">
+    <style vid="8">
+        :root {
+            --bg: #F8F7F3;
+            --text: #111111;
+            --c1: #EF4538; 
+            --c2: #299645; 
+            --c3: #384399; 
+            --c4: #FAC92A; 
+            --c5: #61A0D8; 
+            --c6: #F27EA6; 
+            --c7: #ED8023; 
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg);
+            overflow: hidden;
+            font-family: 'Gaegu', cursive;
+            cursor: crosshair;
+        }
+
+        
+        #title-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 100;
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+            pointer-events: none;
+            width: 90%;
+            max-width: 800px;
+        }
+
+        #title-container.hidden {
+            opacity: 0;
+            transform: translate(-50%, -60%) scale(0.9);
+        }
+
+        .sup-text {
+            color: var(--c5);
+            font-size: clamp(1.2rem, 3vw, 2rem);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: -10px;
+            display: block;
+            transform: rotate(-2deg);
+        }
+
+        h1 {
+            color: var(--text);
+            font-size: clamp(4rem, 12vw, 9rem);
+            line-height: 0.8;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            text-transform: uppercase;
+        }
+
+        
+        h1 span {
+            display: inline-block;
+            transform-origin: center;
+            animation: gentleWiggle 3s infinite alternate ease-in-out;
+        }
+        
+        h1 span:nth-child(odd) { animation-duration: 2.5s; }
+        h1 span:nth-child(3n) { animation-direction: alternate-reverse; }
+
+        .sub-text {
+            color: var(--text);
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .sub-text span {
+            display: inline-block;
+            animation: bounce 2s infinite ease-in-out;
+        }
+        .sub-text span:nth-child(2) { animation-delay: 0.2s; color: var(--c1); }
+        .sub-text span:nth-child(3) { animation-delay: 0.4s; color: var(--c3); }
+        .sub-text span:nth-child(4) { animation-delay: 0.6s; color: var(--c4); }
+
+        @keyframes gentleWiggle {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-5px) rotate(2deg); }
+            100% { transform: translateY(2px) rotate(-2deg); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        
+        .spawn-item {
+            position: absolute;
+            transform-origin: center center;
+            will-change: transform, opacity;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .spawn-item svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            filter: drop-shadow(0px 2px 0px rgba(0,0,0,0.1));
+        }
+
+        .spawn-label {
+            font-family: 'Gaegu', cursive;
+            color: var(--c5);
+            font-size: 1.2rem;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards 0.2s;
+            white-space: nowrap;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+            80% { transform: scale(1.1) rotate(10deg); opacity: 1; }
+            100% { transform: scale(1) rotate(var(--final-rot)); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        
+        .spawn-item.resting {
+            animation: restingWiggle 4s infinite ease-in-out alternate;
+        }
+
+        @keyframes restingWiggle {
+            0% { transform: scale(1) rotate(calc(var(--final-rot) - 2deg)); }
+            100% { transform: scale(1.02) rotate(calc(var(--final-rot) + 2deg)); }
+        }
+
+    </style>
+</head>
+<body vid="9">
+
+    <div id="title-container" vid="10">
+        <span class="sup-text" vid="11">Smash the keyboard!</span>
+        <h1 id="main-title" vid="12"></h1>
+        <div class="sub-text" vid="13">
+            <span vid="14">SMASH</span>
+            <span vid="15">WIGGLE</span>
+            <span vid="16">CLICK</span>
+            <span vid="17">ROAR</span>
+        </div>
+    </div>
+
+    <script vid="18">
+        
+        const titleText = "CHAOS KITTIES";
+        const titleEl = document.getElementById('main-title');
+        
+        
+        titleText.split('').forEach(char => {
+            if (char === ' ') {
+                titleEl.appendChild(document.createTextNode(' '));
+                return;
+            }
+            const span = document.createElement('span');
+            span.innerText = char;
+            
+            const scale = 0.8 + Math.random() * 0.4;
+            const rot = -10 + Math.random() * 20;
+            const y = -10 + Math.random() * 20;
+            span.style.transform = `scale(${scale}) rotate(${rot}deg) translateY(${y}px)`;
+            titleEl.appendChild(span);
+        });
+
+
+        
+        
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        const pentatonicScale = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
+
+        function playBloop(intensity = 'light') {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            
+            const freq = pentatonicScale[Math.floor(Math.random() * pentatonicScale.length)];
+            osc.frequency.value = freq;
+
+            const now = audioCtx.currentTime;
+
+            if (intensity === 'heavy') {
+                
+                osc.type = Math.random() > 0.5 ? 'square' : 'triangle';
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.15, now + 0.02); 
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.3); 
+                osc.start(now);
+                osc.stop(now + 0.35);
+            } else {
+                
+                osc.type = 'sine';
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(0.05, now + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            }
+        }
+
+
+        
+        
+        const palettes = ['#EF4538', '#299645', '#384399', '#FAC92A', '#61A0D8', '#F27EA6', '#ED8023'];
+        const labels = ['A Vibe', 'Chaos', 'The Giggles', 'Weirdness', 'Pizzazz', 'A Sniff', 'Guts', 'Dream', 'Hope', 'Joy'];
+
+        const rawSVGs = [
+            
+            `<svg viewBox="0 0 100 100">
+                <path d="M 20 50 C 10 30, 25 15, 40 20 C 45 5, 55 5, 60 20 C 75 15, 90 30, 80 50 C 95 70, 80 90, 50 85 C 20 90, 5 70, 20 50 Z" fill="COLOR" />
+                <circle cx="35" cy="45" r="4" fill="#111" />
+                <circle cx="65" cy="45" r="4" fill="#111" />
+                <path d="M 45 55 Q 50 65 55 55" stroke="#111" stroke-width="4" stroke-linecap="round" fill="none" />
+            </svg>`,
+            
+            
+            `<svg viewBox="0 0 100 100">
+                <path d="M 50 10 L 80 80 L 20 80 Z" fill="COLOR" />
+                <path d="M 50 10 L 40 -5 L 55 5 M 80 80 L 95 90 L 85 75 M 20 80 L 5 90 L 15 75" stroke="COLOR" stroke-width="6" stroke-linecap="round" fill="none" />
+                <circle cx="40" cy="50" r="5" fill="#111" />
+                <circle cx="60" cy="55" r="3" fill="#111" />
+                <path d="M 45 65 L 55 65" stroke="#111" stroke-width="4" stroke-linecap="round" />
+            </svg>`,
+
+            
+            `<svg viewBox="0 0 100 100">
+                <path d="M 30 30 Q 10 30, 15 50 Q 5 60, 20 75 Q 30 90, 50 85 Q 70 90, 80 75 Q 95 60, 85 50 Q 90 30, 70 30 Q 60 10, 50 20 Q 40 10, 30 30 Z" fill="none" stroke="COLOR" stroke-width="8" stroke-linejoin="round" />
+                <circle cx="35" cy="55" r="6" fill="#111" />
+                <circle cx="65" cy="55" r="6" fill="#111" />
+                <path d="M 40 45 L 30 35 M 60 45 L 70 35" stroke="#111" stroke-width="4" stroke-linecap="round" />
+            </svg>`,
+
+            
+            `<svg viewBox="0 0 100 100">
+                <path d="M 20 80 C 10 60, 10 40, 30 30 C 40 20, 50 20, 60 30 C 80 40, 80 60, 70 80 C 60 95, 30 95, 20 80 Z" fill="COLOR" />
+                <path d="M 30 30 L 25 10 L 40 25 M 60 30 L 65 10 L 50 25" fill="COLOR" />
+                <path d="M 35 45 Q 40 40 45 45 M 55 45 Q 60 40 65 45" stroke="#111" stroke-width="4" stroke-linecap="round" fill="none" />
+                <circle cx="50" cy="60" r="8" fill="#111" />
+            </svg>`,
+
+            
+            `<svg viewBox="0 0 100 100">
+                <path d="M 50 10 L 55 45 L 90 50 L 55 55 L 50 90 L 45 55 L 10 50 L 45 45 Z" fill="COLOR" />
+                <circle cx="50" cy="50" r="5" fill="#111" />
+            </svg>`,
+
+            
+            `<svg viewBox="0 0 100 100">
+                <path d="M 30 60 C 20 80, 50 90, 60 70 C 70 50, 40 40, 30 60 Z" fill="COLOR" />
+                <circle cx="25" cy="35" r="12" fill="COLOR" />
+                <circle cx="50" cy="20" r="14" fill="COLOR" />
+                <circle cx="75" cy="35" r="12" fill="COLOR" />
+            </svg>`
+        ];
+
+
+        
+        let hasStarted = false;
+        let elementsSpawned = 0;
+        const maxElements = 150; 
+        const elementsQueue = [];
+
+        function getRandomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function spawnElement(x, y, scaleMult = 1, isKeyboard = false) {
+            if (!hasStarted) {
+                document.getElementById('title-container').classList.add('hidden');
+                hasStarted = true;
+            }
+
+            const el = document.createElement('div');
+            el.className = 'spawn-item';
+            
+            
+            const svgTemplate = getRandomItem(rawSVGs);
+            const color = getRandomItem(palettes);
+            el.innerHTML = svgTemplate.replace(/COLOR/g, color);
+
+            
+            if (isKeyboard || Math.random() > 0.8) {
+                const labelColor = getRandomItem(palettes);
+                const label = document.createElement('div');
+                label.className = 'spawn-label';
+                label.innerText = getRandomItem(labels);
+                label.style.color = labelColor;
+                el.appendChild(label);
+            }
+
+            
+            const baseSize = isKeyboard ? 100 + Math.random() * 100 : 40 + Math.random() * 60;
+            const finalSize = baseSize * scaleMult;
+            const rot = -40 + Math.random() * 80;
+            
+            el.style.width = `${finalSize}px`;
+            el.style.height = `${finalSize}px`;
+            el.style.left = `${x - finalSize/2}px`;
+            el.style.top = `${y - finalSize/2}px`;
+            el.style.setProperty('--final-rot', `${rot}deg`);
+
+            document.body.appendChild(el);
+            elementsQueue.push(el);
+
+            
+            setTimeout(() => {
+                if(document.body.contains(el)) el.classList.add('resting');
+            }, 400);
+
+            
+            playBloop(isKeyboard ? 'heavy' : 'light');
+
+            
+            if (elementsQueue.length > maxElements) {
+                const oldEl = elementsQueue.shift();
+                oldEl.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                oldEl.style.opacity = '0';
+                oldEl.style.transform += ' scale(0)';
+                setTimeout(() => oldEl.remove(), 500);
+            }
+        }
+
+        
+
+        
+        window.addEventListener('keydown', (e) => {
+            
+            if(e.key !== 'F12' && e.key !== 'F5') e.preventDefault(); 
+            
+            
+            const x = Math.random() * window.innerWidth;
+            const y = Math.random() * window.innerHeight;
+            spawnElement(x, y, 1.2, true);
+        });
+
+        
+        let lastMouseX = -100;
+        let lastMouseY = -100;
+        const minDistance = 50; 
+
+        window.addEventListener('mousemove', (e) => {
+            const dist = Math.hypot(e.clientX - lastMouseX, e.clientY - lastMouseY);
+            if (dist > minDistance) {
+                spawnElement(e.clientX, e.clientY, 0.6 + (Math.random()*0.4), false);
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+            }
+        });
+
+        
+        window.addEventListener('mousedown', (e) => {
+            const burstCount = 5 + Math.floor(Math.random() * 5);
+            for(let i=0; i<burstCount; i++) {
+                setTimeout(() => {
+                    const offsetX = (Math.random() - 0.5) * 200;
+                    const offsetY = (Math.random() - 0.5) * 200;
+                    spawnElement(e.clientX + offsetX, e.clientY + offsetY, 0.8, true);
+                }, i * 30); 
+            }
+        });
+
+        
+        window.addEventListener('touchmove', (e) => {
+            e.preventDefault(); 
+            const touch = e.touches[0];
+            const dist = Math.hypot(touch.clientX - lastMouseX, touch.clientY - lastMouseY);
+            if (dist > minDistance) {
+                spawnElement(touch.clientX, touch.clientY, 0.7, false);
+                lastMouseX = touch.clientX;
+                lastMouseY = touch.clientY;
+            }
+        }, {passive: false});
+
+        window.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            spawnElement(touch.clientX, touch.clientY, 1.5, true);
+            lastMouseX = touch.clientX;
+            lastMouseY = touch.clientY;
+        }, {passive: false});
+
+    </script>
+
+</body></html>

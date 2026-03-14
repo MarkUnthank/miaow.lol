@@ -1,0 +1,689 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" vid="3">
+    <title vid="4">SUPERFOOD CAT MASH™</title>
+    <style vid="5">
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;700;900&display=swap');
+
+        :root {
+            --bg: #f4f0e6;
+            --red: #e83a30;
+            --yellow: #fcd400;
+            --blue: #1c49c2;
+            --green: #00a04b;
+            --pink: #f2add2;
+            --ink: #181818;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-sans: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none; 
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg);
+            color: var(--ink);
+            overflow: hidden;
+            font-family: var(--font-sans);
+            cursor: crosshair;
+        }
+
+        
+        .packaging-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none; 
+            display: grid;
+            grid-template-columns: 200px 1fr 200px;
+            grid-template-rows: 150px 1fr 150px;
+            padding: 24px;
+            z-index: 10;
+        }
+
+        .fold-line {
+            position: absolute;
+            border-style: dashed;
+            border-color: rgba(24, 24, 24, 0.2);
+            border-width: 0;
+        }
+
+        .fold-v-1 { left: 224px; top: 0; bottom: 0; border-left-width: 1px; }
+        .fold-v-2 { right: 224px; top: 0; bottom: 0; border-left-width: 1px; }
+        .fold-h-1 { top: 174px; left: 0; right: 0; border-top-width: 1px; }
+        .fold-h-2 { bottom: 174px; left: 0; right: 0; border-top-width: 1px; }
+
+        .crop-mark {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+        }
+        .crop-mark::before, .crop-mark::after {
+            content: ''; position: absolute; background: var(--ink);
+        }
+        .crop-mark::before { width: 100%; height: 1px; top: 50%; left: 0; }
+        .crop-mark::after { height: 100%; width: 1px; left: 50%; top: 0; }
+        
+        .tl { top: 12px; left: 12px; }
+        .tr { top: 12px; right: 12px; }
+        .bl { bottom: 12px; left: 12px; }
+        .br { bottom: 12px; right: 12px; }
+
+        .tech-text {
+            font-family: var(--font-mono);
+            font-size: 8px;
+            text-transform: uppercase;
+            line-height: 1.4;
+            letter-spacing: 0.5px;
+            text-align: justify;
+            color: var(--ink);
+        }
+
+        .panel-left {
+            grid-column: 1;
+            grid-row: 2;
+            padding-right: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .panel-right {
+            grid-column: 3;
+            grid-row: 2;
+            padding-left: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .panel-top {
+            grid-column: 2;
+            grid-row: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .panel-bottom {
+            grid-column: 2;
+            grid-row: 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 12px;
+        }
+
+        .brand-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px solid var(--ink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-sans);
+            font-weight: 900;
+            font-size: 32px;
+            letter-spacing: -2px;
+            background: var(--bg);
+            position: relative;
+        }
+        
+        .brand-logo::after {
+            content: 'C M';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .brand-logo svg {
+            position: absolute;
+            width: 120%;
+            height: 120%;
+            animation: spin 20s linear infinite;
+        }
+
+        .title-block {
+            text-align: center;
+        }
+        .title-block h1 {
+            font-size: 48px;
+            font-weight: 900;
+            margin: 0;
+            line-height: 0.9;
+            letter-spacing: -1px;
+        }
+        .title-block h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 8px 0 0 0;
+            line-height: 1;
+        }
+        .title-block p {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 2px;
+            margin-top: 12px;
+        }
+
+        .barcode {
+            width: 100px;
+            height: 40px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--ink),
+                var(--ink) 2px,
+                transparent 2px,
+                transparent 4px,
+                var(--ink) 4px,
+                var(--ink) 5px,
+                transparent 5px,
+                transparent 8px
+            );
+            margin-bottom: 8px;
+        }
+
+        .icon-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .icon-box {
+            width: 24px;
+            height: 24px;
+            border: 1px solid var(--ink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .instruction-box {
+            border: 1px solid var(--ink);
+            padding: 8px;
+            margin-bottom: 16px;
+        }
+        .instruction-box.highlight {
+            background: var(--yellow);
+            border-color: var(--ink);
+        }
+
+        
+        #mash-container {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            z-index: 5;
+        }
+
+        .mash-element {
+            position: absolute;
+            will-change: transform, opacity;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        
+        @keyframes popIn {
+            0% { transform: scale(0) rotate(var(--rot-start)); opacity: 0; }
+            60% { transform: scale(1.2) rotate(var(--rot-mid)); opacity: 1; }
+            100% { transform: scale(1) rotate(var(--rot-end)); opacity: 1; }
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(var(--rot-end)); opacity: 1; }
+            100% { transform: translateY(-200px) rotate(calc(var(--rot-end) + 45deg)); opacity: 0; }
+        }
+        
+        @keyframes fallDown {
+            0% { transform: translateY(0) rotate(var(--rot-end)); opacity: 1; }
+            100% { transform: translateY(200px) rotate(calc(var(--rot-end) - 45deg)); opacity: 0; }
+        }
+
+        @keyframes expandFade {
+            0% { transform: scale(0.5); opacity: 1; border-width: 20px; }
+            100% { transform: scale(3); opacity: 0; border-width: 0px; }
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        .type-key {
+            font-family: var(--font-sans);
+            font-weight: 900;
+            font-size: 25vw;
+            line-height: 1;
+            text-transform: uppercase;
+            color: var(--color);
+            -webkit-text-stroke: 4px var(--ink);
+            text-shadow: 8px 8px 0px var(--ink);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, fallDown 2s ease-in 1s forwards;
+            pointer-events: none;
+        }
+
+        .type-emoji {
+            font-size: var(--size);
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, floatUp 3s ease-in 2s forwards;
+            filter: drop-shadow(4px 4px 0px var(--ink));
+        }
+
+        .type-shape {
+            width: var(--size);
+            height: var(--size);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, floatUp 4s ease-in 1s forwards;
+        }
+        .type-shape svg {
+            width: 100%;
+            height: 100%;
+            fill: var(--color);
+            stroke: var(--ink);
+            stroke-width: 2px;
+        }
+
+        .type-burst {
+            border-radius: 50%;
+            border: solid var(--color);
+            width: var(--size);
+            height: var(--size);
+            animation: expandFade 0.6s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+        }
+        
+        .type-trail {
+            width: var(--size);
+            height: var(--size);
+            border-radius: 50%;
+            background: var(--color);
+            border: 2px solid var(--ink);
+            animation: popIn 0.2s ease-out forwards, fallDown 1s ease-in 0.5s forwards;
+        }
+
+        
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(-5px, 5px); }
+            50% { transform: translate(5px, -5px); }
+            75% { transform: translate(-5px, -5px); }
+        }
+        .shake-active {
+            animation: shake 0.1s ease-in-out;
+        }
+
+        
+        #start-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(244, 240, 230, 0.9);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: opacity 0.3s;
+        }
+        .start-btn {
+            background: var(--yellow);
+            border: 4px solid var(--ink);
+            padding: 20px 40px;
+            font-family: var(--font-sans);
+            font-weight: 900;
+            font-size: 32px;
+            text-transform: uppercase;
+            box-shadow: 8px 8px 0px var(--ink);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .start-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 4px 4px 0px var(--ink);
+        }
+        
+        @media (max-width: 768px) {
+            .packaging-layer {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto;
+                padding: 12px;
+            }
+            .panel-left, .panel-right, .fold-line { display: none; }
+            .type-key { font-size: 50vw; }
+            .title-block h1 { font-size: 32px; }
+            .title-block h2 { font-size: 18px; }
+        }
+
+    </style>
+</head>
+<body vid="6">
+
+    
+    <div id="start-overlay" onclick="initApp()" vid="7">
+        <div class="start-btn" vid="8">CLICK TO MASH</div>
+    </div>
+
+    
+    <div class="packaging-layer" vid="9">
+        <div class="fold-line fold-v-1" vid="10"></div>
+        <div class="fold-line fold-v-2" vid="11"></div>
+        <div class="fold-line fold-h-1" vid="12"></div>
+        <div class="fold-line fold-h-2" vid="13"></div>
+        
+        <div class="crop-mark tl" vid="14"></div>
+        <div class="crop-mark tr" vid="15"></div>
+        <div class="crop-mark bl" vid="16"></div>
+        <div class="crop-mark br" vid="17"></div>
+
+        <div class="panel-top" vid="18">
+            <div class="brand-logo" vid="19">
+                <svg viewBox="0 0 100 100" vid="20">
+                    <path id="curve" fill="transparent" d="M 10 50 A 40 40 0 1 1 90 50 A 40 40 0 1 1 10 50" vid="21"></path>
+                    <text font-family="JetBrains Mono" font-size="12" font-weight="bold" fill="var(--ink)" letter-spacing="3" vid="22">
+                        <textPath href="#curve" vid="23">YOUTH TO THE PEOPLE • SUPERFOOD •</textPath>
+                    </text>
+                </svg>
+            </div>
+        </div>
+
+        <div class="panel-left" vid="24">
+            <div class="tech-text instruction-box" vid="25">
+                <strong vid="26">Directions for use:</strong><br vid="27"><br vid="28">
+                Dispense 1 to 2 handfuls of chaos onto keyboard. Rub hands together to mash. Move mouse wildly for up to 60 seconds. Rinse, pet cat, and follow with moisturizer. Use 2 times a day. In case of contact with eyes, blink thoroughly. For external use only.
+            </div>
+            <div class="tech-text" vid="29">
+                KALE + SPINACH EXTRACTS<br vid="30">
+                VITAMIN C DERIVATIVE<br vid="31">
+                GREEN TEA EXTRACT<br vid="32">
+                PLANT-DERIVED SURFACTANTS<br vid="33"><br vid="34">
+                <strong vid="35">EXTRACTS DE CHOU FRISÉ + ÉPINARD</strong><br vid="36">
+                DÉRIVÉ DE VITAMINE C<br vid="37">
+                EXTRAIT DE THÉ VERT
+            </div>
+        </div>
+
+        <div class="panel-right" vid="38">
+            <div class="tech-text instruction-box highlight" vid="39">
+                <strong vid="40">PRO-GRADE DIGITAL MASHING FOR ALL</strong><br vid="41">
+                SUPERFOODS + SCIENCE™<br vid="42">
+                VEGAN FORMULAS<br vid="43">
+                CREATED IN CALIFORNIA
+            </div>
+            <div class="tech-text" style="font-size: 6px;" vid="44">
+                <strong vid="45">DETAILS &amp; INGREDIENTS:</strong> AQUA/WATER/EAU, COCAMIDOPROPYL HYDROXYSULTAINE, SODIUM COCOYL ISETHIONATE, POLYACRYLATE CROSSPOLYMER-6, SODIUM CHLORIDE, FELIS CATUS (CAT) EXTRACT, BRASSICA OLERACEA ACEPHALA (KALE) LEAF EXTRACT, SPINACIA OLERACEA (SPINACH) LEAF EXTRACT, CAMELLIA SINENSIS (GREEN TEA) LEAF EXTRACT, ALOE BARBADENSIS LEAF JUICE, MEDICAGO SATIVA (ALFALFA) EXTRACT, CHAMOMILLA RECUTITA (MATRICARIA) FLOWER EXTRACT, PANTHENOL, GLYCERIN, MASHING POLYMERS.
+            </div>
+            <div vid="46">
+                <div class="barcode" vid="47"></div>
+                <div class="tech-text" vid="48">3 605973 024816</div>
+            </div>
+        </div>
+
+        <div class="panel-bottom" vid="49">
+            <div class="title-block" vid="50">
+                <h1 vid="51">CAT MASH</h1>
+                <h2 vid="52">SUPERFOOD KEYBOARD CLEANSER</h2>
+                <p vid="53">MOUSE WASH • NETTOYANT SOURIS</p>
+            </div>
+            <div class="icon-row" vid="54">
+                <div class="icon-box" vid="55">100%</div>
+                <div class="icon-box" vid="56">V</div>
+                <div class="icon-box" vid="57">♻</div>
+            </div>
+            <div class="tech-text" style="margin-top: 12px;" vid="58">237 ML • 8 FL OZ ⚖</div>
+        </div>
+    </div>
+
+    
+    <div id="mash-container" vid="59"></div>
+
+    <script vid="60">
+        
+        const colors = ['#e83a30', '#fcd400', '#1c49c2', '#00a04b', '#f2add2'];
+        const emojis = ['😸','😹','😻','😼','😽','🙀','😿','😾','🐱','🐈','🐾','✨','🌟','🐟','🧶','🐁'];
+        
+        
+        const shapes = [
+            
+            `<svg viewBox="0 0 100 100"><path d="M50 0 C50 40 60 50 100 50 C60 50 50 60 50 100 C50 60 40 50 0 50 C40 50 50 40 50 0 Z"/></svg>`,
+            
+            `<svg viewBox="0 0 100 100"><path d="M10 50 Q 25 20, 50 50 T 90 50" fill="none" stroke-width="15" stroke-linecap="round"/></svg>`,
+            
+            `<svg viewBox="0 0 100 100"><path d="M25,30 C25,10 75,10 75,30 C90,40 90,70 70,80 C50,90 20,80 15,60 C10,40 15,35 25,30 Z"/></svg>`,
+            
+            `<svg viewBox="0 0 100 100"><path d="M50 90 C 10 90 10 30 50 10 C 90 30 90 90 50 90 Z"/></svg>`
+        ];
+
+        const container = document.getElementById('mash-container');
+        let audioCtx = null;
+        let isInitialized = false;
+
+        
+        let lastMouseTime = 0;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type = 'key') {
+            if (!audioCtx) return;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+            
+            if (type === 'key') {
+                
+                osc.type = ['square', 'sawtooth'][Math.floor(Math.random() * 2)];
+                const freqs = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99]; 
+                osc.frequency.setValueAtTime(freqs[Math.floor(Math.random() * freqs.length)], now);
+                
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.2, now + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                
+                osc.start(now);
+                osc.stop(now + 0.5);
+            } else if (type === 'click') {
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.1);
+                
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'move') {
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(1200 + Math.random()*500, now);
+                
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                
+                osc.start(now);
+                osc.stop(now + 0.05);
+            }
+        }
+
+        
+        function random(min, max) { return Math.random() * (max - min) + min; }
+        function randomColor() { return colors[Math.floor(Math.random() * colors.length)]; }
+
+        function createDOMElement(className, x, y) {
+            const el = document.createElement('div');
+            el.className = `mash-element ${className}`;
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            
+            
+            el.style.setProperty('--rot-start', `${random(-180, 180)}deg`);
+            el.style.setProperty('--rot-mid', `${random(-45, 45)}deg`);
+            el.style.setProperty('--rot-end', `${random(-90, 90)}deg`);
+            
+            container.appendChild(el);
+            return el;
+        }
+
+        function spawnTrail(x, y) {
+            const el = createDOMElement('type-trail', x, y);
+            const size = random(8, 20);
+            el.style.setProperty('--size', `${size}px`);
+            el.style.setProperty('--color', randomColor());
+            el.style.transform = `translate(-50%, -50%)`;
+            
+            
+            if(Math.random() > 0.8) {
+                el.className = 'mash-element type-emoji';
+                el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                el.style.setProperty('--size', `${size * 2}px`);
+                el.style.background = 'none';
+                el.style.border = 'none';
+            }
+
+            setTimeout(() => el.remove(), 1500);
+            playSound('move');
+        }
+
+        function spawnBurst(x, y) {
+            const el = createDOMElement('type-burst', x, y);
+            el.style.setProperty('--size', `${random(50, 150)}px`);
+            el.style.setProperty('--color', randomColor());
+            el.style.transform = `translate(-50%, -50%)`;
+            setTimeout(() => el.remove(), 600);
+        }
+
+        function spawnShapeOrEmoji(x, y, scaleMult = 1) {
+            const isShape = Math.random() > 0.6;
+            let el;
+            
+            if (isShape) {
+                el = createDOMElement('type-shape', x, y);
+                el.innerHTML = shapes[Math.floor(Math.random() * shapes.length)];
+                el.style.setProperty('--size', `${random(60, 150) * scaleMult}px`);
+                el.style.setProperty('--color', randomColor());
+            } else {
+                el = createDOMElement('type-emoji', x, y);
+                el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                el.style.setProperty('--size', `${random(40, 100) * scaleMult}px`);
+            }
+            
+            el.style.transform = `translate(-50%, -50%)`;
+            setTimeout(() => el.remove(), 5000);
+        }
+
+        function spawnKey(key, x, y) {
+            const el = createDOMElement('type-key', x, y);
+            el.innerText = key;
+            el.style.setProperty('--color', randomColor());
+            el.style.transform = `translate(-50%, -50%)`;
+            
+            
+            document.body.classList.remove('shake-active');
+            void document.body.offsetWidth; 
+            document.body.classList.add('shake-active');
+
+            setTimeout(() => el.remove(), 3000);
+        }
+
+        
+        
+        function initApp() {
+            if (isInitialized) return;
+            isInitialized = true;
+            document.getElementById('start-overlay').style.opacity = '0';
+            setTimeout(() => document.getElementById('start-overlay').remove(), 300);
+            initAudio();
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isInitialized) return;
+            const now = Date.now();
+            
+            const dist = Math.hypot(e.clientX - lastMouseX, e.clientY - lastMouseY);
+            
+            if (now - lastMouseTime > 30 || dist > 50) {
+                spawnTrail(e.clientX, e.clientY);
+                lastMouseTime = now;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+            }
+        });
+
+        window.addEventListener('mousedown', (e) => {
+            initApp();
+            spawnBurst(e.clientX, e.clientY);
+            
+            for(let i=0; i<3; i++) {
+                spawnShapeOrEmoji(
+                    e.clientX + random(-50, 50), 
+                    e.clientY + random(-50, 50)
+                );
+            }
+            playSound('click');
+        });
+
+        window.addEventListener('keydown', (e) => {
+            initApp();
+            
+            if (e.ctrlKey || e.metaKey || e.altKey || e.key === 'Tab') return;
+            e.preventDefault();
+
+            
+            const x = random(window.innerWidth * 0.2, window.innerWidth * 0.8);
+            const y = random(window.innerHeight * 0.2, window.innerHeight * 0.8);
+
+            const keyChar = e.key.length === 1 ? e.key : '😸'; 
+            
+            spawnBurst(x, y);
+            spawnKey(keyChar, x, y);
+            
+            
+            for(let i=0; i<5; i++) {
+                spawnShapeOrEmoji(
+                    x + random(-150, 150), 
+                    y + random(-150, 150),
+                    0.5 
+                );
+            }
+            playSound('key');
+        });
+
+        
+        window.addEventListener('touchmove', (e) => {
+            if (!isInitialized) return;
+            const touch = e.touches[0];
+            const now = Date.now();
+            if (now - lastMouseTime > 30) {
+                spawnTrail(touch.clientX, touch.clientY);
+                lastMouseTime = now;
+            }
+        }, {passive: true});
+
+        window.addEventListener('touchstart', (e) => {
+            initApp();
+            const touch = e.touches[0];
+            spawnBurst(touch.clientX, touch.clientY);
+            spawnShapeOrEmoji(touch.clientX, touch.clientY);
+            playSound('click');
+        }, {passive: true});
+
+    </script>
+
+</body></html>

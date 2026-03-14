@@ -1,0 +1,470 @@
+<html lang="en" vid="0"><head vid="1">
+<meta charset="UTF-8" vid="2">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" vid="3">
+<title vid="4">Kitty Mash!</title>
+<style vid="5">
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+    :root {
+        --yellow: #FFE600;
+        --red: #F04631;
+        --pink: #F8A5C6;
+        --black: #232021;
+        --gray: #D3D5D4;
+        --bg: #FFFFFF;
+    }
+
+    * {
+        box-sizing: border-box;
+        touch-action: none; 
+    }
+
+    body, html {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background-color: var(--bg);
+        font-family: 'Fredoka One', cursive, sans-serif;
+        user-select: none;
+        cursor: crosshair;
+        transition: background-color 0.1s ease;
+    }
+
+    
+    #start-screen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.95);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        flex-direction: column;
+        cursor: pointer;
+    }
+
+    .blob-btn {
+        background-color: var(--yellow);
+        color: var(--black);
+        font-family: 'Fredoka One', cursive;
+        font-size: 4rem;
+        padding: 40px 80px;
+        border: none;
+        border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+        cursor: pointer;
+        animation: morph 3s ease-in-out infinite, pulse 2s infinite;
+        box-shadow: 15px 15px 0px var(--red);
+        transition: transform 0.1s;
+        text-transform: uppercase;
+        position: relative;
+    }
+
+    .blob-btn:active {
+        transform: scale(0.95) translate(5px, 5px);
+        box-shadow: 10px 10px 0px var(--red);
+    }
+
+    .blob-btn::after {
+        content: 'MASH ME!';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+    }
+
+    @keyframes morph {
+        0%, 100% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+        34% { border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%; }
+        67% { border-radius: 100% 60% 60% 100% / 100% 100% 60% 60%; }
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1) rotate(-2deg); }
+        50% { transform: scale(1.05) rotate(2deg); }
+    }
+
+    .instructions {
+        margin-top: 60px;
+        font-size: 1.5rem;
+        color: var(--black);
+        text-align: center;
+        max-width: 600px;
+        line-height: 1.4;
+    }
+
+    
+    #canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+
+    .particle {
+        position: absolute;
+        pointer-events: none;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        will-change: transform, opacity;
+    }
+
+    
+    .emoji {
+        font-size: clamp(3rem, 8vw, 8rem);
+        filter: drop-shadow(4px 4px 0px rgba(35, 32, 33, 0.2));
+    }
+
+    
+    .shape svg {
+        width: 100%;
+        height: 100%;
+        fill: currentColor;
+    }
+
+    
+    @keyframes pop-burst {
+        0% { transform: translate(-50%, -50%) scale(0) rotate(0deg); opacity: 1; }
+        20% { transform: translate(var(--tx-mid), var(--ty-mid)) scale(1.2) rotate(var(--rot-mid)); opacity: 1; }
+        100% { transform: translate(var(--tx-end), var(--ty-end)) scale(0.8) rotate(var(--rot-end)); opacity: 0; }
+    }
+
+    @keyframes trail-fade {
+        0% { transform: translate(-50%, -50%) scale(0.5) rotate(var(--rot-start)); opacity: 1; }
+        100% { transform: translate(-50%, -50%) scale(1.5) rotate(var(--rot-end)); opacity: 0; }
+    }
+
+    @keyframes wiggle-drop {
+        0% { transform: translate(-50%, -50%) scale(0); }
+        10% { transform: translate(-50%, -50%) scale(1.2) rotate(-10deg); }
+        20% { transform: translate(-50%, -50%) scale(1) rotate(10deg); }
+        100% { transform: translate(-50%, 100vh) scale(1) rotate(45deg); opacity: 0; }
+    }
+
+    
+    .giant-kitty {
+        position: absolute;
+        bottom: -20%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 30vw;
+        pointer-events: none;
+        animation: peek-a-boo 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        z-index: 10;
+        filter: drop-shadow(10px 10px 0px var(--black));
+    }
+
+    @keyframes peek-a-boo {
+        0% { bottom: -100%; transform: translateX(-50%) rotate(-10deg); }
+        50% { bottom: -5%; transform: translateX(-50%) rotate(5deg); }
+        100% { bottom: -100%; transform: translateX(-50%) rotate(-10deg); }
+    }
+
+</style>
+</head>
+<body vid="6">
+
+    <div id="start-screen" vid="7">
+        <button class="blob-btn" vid="8"></button>
+        <div class="instructions" vid="9">
+            Mash the keyboard!<br vid="10">
+            Wiggle the mouse!<br vid="11">
+            Make a mess!
+        </div>
+    </div>
+
+    <div id="canvas" vid="12"></div>
+
+<script vid="13">
+    
+    const colors = ['#FFE600', '#F04631', '#F8A5C6', '#232021', '#D3D5D4'];
+    const emojis = ['🐱', '🐈', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾', '🐾', '🧶', '🐟', '🐁'];
+    
+    
+    const shapes = [
+        
+        `<svg viewBox="0 0 100 100"><path d="M50 0 L60 40 L100 50 L60 60 L50 100 L40 60 L0 50 L40 40 Z" /></svg>`,
+        
+        `<svg viewBox="0 0 100 100"><path d="M45,15 C65,5 85,25 90,45 C95,65 75,90 50,90 C25,90 10,70 10,50 C10,30 25,25 45,15 Z" /></svg>`,
+        
+        `<svg viewBox="0 0 100 100"><path d="M20,20 C80,10 90,40 85,80 C80,95 20,95 15,80 C10,65 5,30 20,20 Z" /></svg>`,
+        
+        `<svg viewBox="0 0 100 100"><rect x="40" y="10" width="20" height="80" rx="10"/><rect x="10" y="40" width="80" height="20" rx="10"/></svg>`,
+        
+        `<svg viewBox="0 0 100 100"><path fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" d="M10,50 Q25,10 50,50 T90,50"/></svg>`
+    ];
+
+    const canvas = document.getElementById('canvas');
+    let audioCtx;
+    let isStarted = false;
+
+    
+    function initAudio() {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+    }
+
+    function playSound(type) {
+        if (!audioCtx || audioCtx.state === 'suspended') return;
+
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'pop') {
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400 + Math.random() * 400, now);
+            osc.frequency.exponentialRampToValueAtTime(800 + Math.random() * 400, now + 0.1);
+            gainNode.gain.setValueAtTime(0.1, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+        } else if (type === 'meow') {
+            
+            osc.type = Math.random() > 0.5 ? 'triangle' : 'sawtooth';
+            const baseFreq = 300 + Math.random() * 500;
+            osc.frequency.setValueAtTime(baseFreq, now);
+            osc.frequency.linearRampToValueAtTime(baseFreq + 300, now + 0.1);
+            osc.frequency.linearRampToValueAtTime(baseFreq - 100, now + 0.3);
+            
+            
+            const lfo = audioCtx.createOscillator();
+            const lfoGain = audioCtx.createGain();
+            lfo.frequency.value = 8;
+            lfoGain.gain.value = 20;
+            lfo.connect(lfoGain);
+            lfoGain.connect(osc.frequency);
+            lfo.start(now);
+            lfo.stop(now + 0.3);
+
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.3, now + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            
+            osc.start(now);
+            osc.stop(now + 0.3);
+        } else if (type === 'bass') {
+            
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(100, now);
+            osc.frequency.exponentialRampToValueAtTime(20, now + 0.5);
+            gainNode.gain.setValueAtTime(0.4, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now);
+            osc.stop(now + 0.5);
+        }
+    }
+
+    
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function spawnElement(x, y, isMouseTrail = false) {
+        const el = document.createElement('div');
+        el.className = 'particle';
+
+        
+        const isEmoji = Math.random() > 0.4;
+        
+        if (isEmoji) {
+            el.classList.add('emoji');
+            el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            
+            if (!isMouseTrail && Math.random() > 0.8) {
+                el.style.fontSize = `${getRandomInt(10, 25)}rem`;
+                el.style.zIndex = 5;
+            }
+        } else {
+            el.classList.add('shape');
+            el.innerHTML = shapes[Math.floor(Math.random() * shapes.length)];
+            const size = isMouseTrail ? getRandomInt(20, 60) : getRandomInt(50, 200);
+            el.style.width = `${size}px`;
+            el.style.height = `${size}px`;
+            el.style.color = colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+
+        if (isMouseTrail) {
+            
+            el.style.setProperty('--rot-start', `${getRandomInt(-45, 45)}deg`);
+            el.style.setProperty('--rot-end', `${getRandomInt(-90, 90)}deg`);
+            el.style.animation = `trail-fade ${getRandomInt(400, 800)}ms ease-out forwards`;
+            playSound('pop');
+        } else {
+            
+            const angle = Math.random() * Math.PI * 2;
+            const distance = getRandomInt(100, 400);
+            
+            
+            const txMid = Math.cos(angle) * (distance * 0.5) + 'px';
+            const tyMid = (Math.sin(angle) * (distance * 0.5) - 100) + 'px'; 
+            
+            
+            const txEnd = Math.cos(angle) * distance + 'px';
+            const tyEnd = (Math.sin(angle) * distance + 100) + 'px'; 
+
+            el.style.setProperty('--tx-mid', txMid);
+            el.style.setProperty('--ty-mid', tyMid);
+            el.style.setProperty('--tx-end', txEnd);
+            el.style.setProperty('--ty-end', tyEnd);
+            
+            el.style.setProperty('--rot-mid', `${getRandomInt(-180, 180)}deg`);
+            el.style.setProperty('--rot-end', `${getRandomInt(-360, 360)}deg`);
+
+            
+            if (Math.random() > 0.2) {
+                el.style.animation = `pop-burst ${getRandomInt(600, 1200)}ms cubic-bezier(0.25, 1, 0.5, 1) forwards`;
+            } else {
+                el.style.animation = `wiggle-drop ${getRandomInt(1000, 2000)}ms ease-in forwards`;
+            }
+            
+            playSound('meow');
+        }
+
+        canvas.appendChild(el);
+
+        
+        el.addEventListener('animationend', () => {
+            el.remove();
+        });
+    }
+
+    function spawnGiantKitty() {
+        const el = document.createElement('div');
+        el.className = 'giant-kitty';
+        el.textContent = '🙀'; 
+        document.body.appendChild(el);
+        playSound('bass');
+        
+        
+        document.body.style.backgroundColor = colors[Math.floor(Math.random() * (colors.length - 1))];
+        setTimeout(() => {
+            document.body.style.backgroundColor = 'var(--bg)';
+        }, 150);
+
+        el.addEventListener('animationend', () => {
+            el.remove();
+        });
+    }
+
+    
+    let lastMouseTime = 0;
+    
+    function handleMouseMove(e) {
+        if (!isStarted) return;
+        const now = Date.now();
+        
+        if (now - lastMouseTime > 30) {
+            spawnElement(e.clientX, e.clientY, true);
+            lastMouseTime = now;
+        }
+    }
+
+    let keyPressCount = 0;
+    let keyTimer;
+
+    function handleKeyDown(e) {
+        if (!isStarted) return;
+        e.preventDefault(); 
+
+        
+        const burstCount = getRandomInt(3, 8);
+        const startX = getRandomInt(100, window.innerWidth - 100);
+        const startY = getRandomInt(100, window.innerHeight - 100);
+
+        for (let i = 0; i < burstCount; i++) {
+            setTimeout(() => {
+                
+                const ox = startX + getRandomInt(-50, 50);
+                const oy = startY + getRandomInt(-50, 50);
+                spawnElement(ox, oy, false);
+            }, i * 20); 
+        }
+
+        
+        keyPressCount++;
+        clearTimeout(keyTimer);
+        
+        if (keyPressCount > 10) {
+            spawnGiantKitty();
+            keyPressCount = 0;
+        } else {
+            keyTimer = setTimeout(() => {
+                keyPressCount = 0;
+            }, 500);
+        }
+        
+        
+        if(Math.random() > 0.8) {
+            const bgColors = ['#FFE600', '#F8A5C6', '#FFFFFF', '#FFFFFF']; 
+            document.body.style.backgroundColor = bgColors[Math.floor(Math.random() * bgColors.length)];
+            setTimeout(() => { document.body.style.backgroundColor = 'var(--bg)'; }, 100);
+        }
+    }
+
+    
+    document.getElementById('start-screen').addEventListener('click', () => {
+        initAudio();
+        
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        
+        document.getElementById('start-screen').style.display = 'none';
+        isStarted = true;
+        
+        
+        playSound('bass');
+        for(let i=0; i<20; i++) {
+            spawnElement(window.innerWidth/2, window.innerHeight/2, false);
+        }
+
+        
+        try {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        } catch(err) {
+            console.log("Fullscreen blocked, continuing normally.");
+        }
+    });
+
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchmove', (e) => {
+        if(e.touches.length > 0) {
+            handleMouseMove(e.touches[0]);
+        }
+    }, {passive: false}); 
+    
+    window.addEventListener('keydown', handleKeyDown);
+    
+    
+    window.addEventListener('click', (e) => {
+        if(isStarted && e.target.id !== 'start-screen' && !e.target.closest('#start-screen')) {
+            for(let i=0; i<5; i++) {
+                spawnElement(e.clientX, e.clientY, false);
+            }
+            if(Math.random() > 0.7) spawnGiantKitty();
+        }
+    });
+
+</script>
+
+</body></html>

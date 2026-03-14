@@ -1,0 +1,630 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" vid="3">
+    <title vid="4">Kitty Mash!</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" vid="5">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" vid="6">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&amp;family=Space+Grotesk:wght@700&amp;display=swap" rel="stylesheet" vid="7">
+    
+    <style vid="8">
+        :root {
+            
+            --bg-blue: #AED3E3;
+            --pink: #FC82C1;
+            --orange: #FE9D5D;
+            --yellow: #FFE86A;
+            --purple: #A275DA;
+            --green: #56C15B;
+            --dark-blue: #3B73C4;
+            --red: #D64646;
+            --black: #2D2926;
+            --cream: #FFF9E6;
+            --border-width: 4px;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none; 
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-color: var(--bg-blue);
+            font-family: 'Space Grotesk', sans-serif;
+            cursor: crosshair;
+        }
+
+        
+        .bg-waves {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-waves svg {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        
+        .app-container {
+            position: absolute;
+            top: 5vh;
+            left: 5vw;
+            width: 90vw;
+            height: 90vh;
+            background-color: var(--cream);
+            border: var(--border-width) solid var(--black);
+            border-radius: 16px;
+            box-shadow: 12px 12px 0px var(--black);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            overflow: hidden;
+            transition: transform 0.1s;
+        }
+
+        
+        .window-header {
+            height: 48px;
+            background-color: var(--purple);
+            border-bottom: var(--border-width) solid var(--black);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 12px;
+            position: relative;
+        }
+
+        .dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 3px solid var(--black);
+        }
+        .dot:nth-child(1) { background-color: var(--pink); }
+        .dot:nth-child(2) { background-color: var(--yellow); }
+        .dot:nth-child(3) { background-color: var(--green); }
+
+        .header-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            left: 0;
+            color: var(--black);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+
+        .header-text span {
+            color: var(--cream);
+            text-shadow: 1px 1px 0 var(--black);
+        }
+
+        
+        .play-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(180deg, var(--cream) 0%, #FFD1E6 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        
+        .hero-title-container {
+            text-align: center;
+            position: relative;
+            z-index: 20;
+            pointer-events: none;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .hero-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: clamp(60px, 12vw, 150px);
+            line-height: 0.9;
+            margin: 0;
+            color: var(--yellow);
+            -webkit-text-stroke: 3px var(--black);
+            
+            text-shadow: 
+                0px 2px 0 var(--black),
+                -2px 4px 0 var(--green),
+                -3px 6px 0 var(--green),
+                -4px 8px 0 var(--green),
+                -5px 10px 0 var(--black),
+                -7px 12px 0 var(--purple),
+                -8px 14px 0 var(--purple),
+                -9px 16px 0 var(--purple),
+                -10px 18px 0 var(--black);
+            transform: rotate(-3deg);
+            white-space: nowrap;
+        }
+
+        .hero-subtitle {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: clamp(16px, 3vw, 24px);
+            background-color: var(--green);
+            color: var(--cream);
+            padding: 8px 24px;
+            border: 3px solid var(--black);
+            border-radius: 40px;
+            display: inline-block;
+            margin-top: 20px;
+            box-shadow: 4px 4px 0 var(--black);
+            transform: rotate(2deg);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        
+        .window-footer {
+            height: 40px;
+            background-color: var(--dark-blue);
+            border-top: var(--border-width) solid var(--black);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            color: var(--cream);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        
+        #intro-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(174, 211, 227, 0.85);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .start-badge {
+            background-color: var(--orange);
+            border: 5px solid var(--black);
+            padding: 40px 60px;
+            border-radius: 50% 50% 10% 10% / 40% 40% 10% 10%; 
+            box-shadow: 10px 10px 0 var(--black);
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            animation: pulse 2s infinite;
+        }
+
+        .start-badge:active {
+            transform: translate(5px, 5px);
+            box-shadow: 5px 5px 0 var(--black);
+        }
+
+        .start-badge h2 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 48px;
+            margin: 0;
+            color: var(--yellow);
+            -webkit-text-stroke: 2px var(--black);
+            text-shadow: 3px 3px 0 var(--pink), 5px 5px 0 var(--black);
+        }
+
+        .start-badge p {
+            font-weight: 700;
+            color: var(--cream);
+            background: var(--black);
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 15px;
+            font-size: 18px;
+        }
+
+        
+        .spawn-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 30;
+        }
+
+        .cat-stamp {
+            position: absolute;
+            transform-origin: center;
+            
+        }
+
+        .trail-particle {
+            position: absolute;
+            font-size: 24px;
+            pointer-events: none;
+            user-select: none;
+            z-index: 25;
+            animation: fadeUp 1s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+
+        
+        @keyframes popIn {
+            0% { transform: scale(0) rotate(var(--rot-start)); opacity: 0; }
+            50% { transform: scale(1.3) rotate(var(--rot-mid)); opacity: 1; }
+            100% { transform: scale(1) rotate(var(--rot-end)); opacity: 1; }
+        }
+
+        @keyframes fallOff {
+            0% { transform: translateY(0) rotate(var(--rot-end)); opacity: 1; }
+            100% { transform: translateY(150vh) rotate(calc(var(--rot-end) + 45deg)); opacity: 0; }
+        }
+
+        @keyframes fadeUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(0.5); opacity: 0; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes shakeWindow {
+            0% { transform: translate(0, 0) rotate(0); }
+            20% { transform: translate(-4px, 4px) rotate(-1deg); }
+            40% { transform: translate(4px, -4px) rotate(1deg); }
+            60% { transform: translate(-4px, -4px) rotate(-1deg); }
+            80% { transform: translate(4px, 4px) rotate(1deg); }
+            100% { transform: translate(0, 0) rotate(0); }
+        }
+        
+        .shake {
+            animation: shakeWindow 0.15s ease-in-out;
+        }
+
+    </style>
+</head>
+<body vid="9">
+
+    
+    <div id="intro-overlay" vid="10">
+        <div class="start-badge" id="start-btn" vid="11">
+            <h2 vid="12">START<br vid="13">MASHING</h2>
+            <p vid="14">CLICK HERE!</p>
+        </div>
+    </div>
+
+    
+    <div class="bg-waves" vid="15">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" vid="16">
+            <path d="M0,50 Q25,30 50,50 T100,50 L100,100 L0,100 Z" fill="var(--pink)" vid="17"></path>
+            <path d="M0,65 Q30,85 60,65 T100,65 L100,100 L0,100 Z" fill="var(--purple)" vid="18"></path>
+            <path d="M0,80 Q20,60 40,80 T100,80 L100,100 L0,100 Z" fill="var(--green)" vid="19"></path>
+            <circle cx="85" cy="20" r="12" fill="var(--yellow)" stroke="var(--black)" stroke-width="0.5" vid="20"></circle>
+            
+            <path d="M15,15 Q20,15 20,10 Q20,15 25,15 Q20,15 20,20 Q20,15 15,15 Z" fill="var(--cream)" stroke="var(--black)" stroke-width="0.3" vid="21"></path>
+            <path d="M80,45 Q83,45 83,42 Q83,45 86,45 Q83,45 83,48 Q83,45 80,45 Z" fill="var(--cream)" stroke="var(--black)" stroke-width="0.3" vid="22"></path>
+        </svg>
+    </div>
+
+    
+    <div class="app-container" id="app-window" vid="23">
+        <div class="window-header" vid="24">
+            <div class="dots" vid="25">
+                <div class="dot" vid="26"></div>
+                <div class="dot" vid="27"></div>
+                <div class="dot" vid="28"></div>
+            </div>
+            <div class="header-text" vid="29">A VIRTUAL EXPERIENCE BY <span vid="30">KITTIES</span></div>
+        </div>
+        
+        <div class="play-area" id="play-area" vid="31">
+            <div class="hero-title-container" vid="32">
+                <h1 class="hero-title" vid="33">KITTY<br vid="34">MASH</h1>
+                <div class="hero-subtitle" vid="35">ON YOUR COMPUTER SCREEN</div>
+            </div>
+            
+            <div class="spawn-layer" id="spawn-layer" vid="36"></div>
+        </div>
+
+        <div class="window-footer" vid="37">
+            <div vid="38">WWW.KITTYMASH.COM</div>
+            <div vid="39">🐾 MEOW.MASH</div>
+        </div>
+    </div>
+
+<script vid="40">
+
+class KittySynth {
+    constructor() {
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.value = 0.3; 
+        this.masterGain.connect(this.ctx.destination);
+    }
+
+    resume() {
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    }
+
+    
+    playBoing() {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        osc.type = 'square';
+        
+        
+        const freq = 150 + Math.random() * 400;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.5, this.ctx.currentTime + 0.1);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.5, this.ctx.currentTime + 0.3);
+
+        
+        gain.gain.setValueAtTime(0, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.5, this.ctx.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.4);
+    }
+
+    
+    playSparkle(intensity) {
+        
+        if (this.ctx.activeSourceCount > 5) return;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        osc.type = 'sine';
+        const baseFreq = 800 + (intensity * 1000); 
+        osc.frequency.setValueAtTime(baseFreq, this.ctx.currentTime);
+        
+        gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.1);
+    }
+}
+
+
+class KittyApp {
+    constructor() {
+        this.synth = null;
+        this.spawnLayer = document.getElementById('spawn-layer');
+        this.appWindow = document.getElementById('app-window');
+        this.playArea = document.getElementById('play-area');
+        
+        this.isRunning = false;
+        this.lastMousePos = { x: 0, y: 0 };
+        this.mouseThrottle = 0;
+        
+        this.colors = ['#FC82C1', '#FE9D5D', '#FFE86A', '#A275DA', '#56C15B', '#AED3E3', '#FFF9E6'];
+        this.emojis = ['🐾', '✨', '🌈', '🌸', '🌼', '⭐', '💧'];
+
+        this.initStartScreen();
+    }
+
+    initStartScreen() {
+        const startBtn = document.getElementById('start-btn');
+        startBtn.addEventListener('click', () => {
+            document.getElementById('intro-overlay').style.display = 'none';
+            this.synth = new KittySynth();
+            this.synth.resume();
+            this.isRunning = true;
+            this.bindEvents();
+        });
+    }
+
+    bindEvents() {
+        window.addEventListener('keydown', (e) => this.handleKeydown(e));
+        this.playArea.addEventListener('mousemove', (e) => this.handleMousemove(e));
+        
+        this.playArea.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            this.handleMousemove({ clientX: touch.clientX, clientY: touch.clientY });
+        }, { passive: false });
+    }
+
+    
+    generateCatSVG(color1, color2) {
+        const types = [
+            
+            `<svg viewBox="0 0 100 100" width="100%" height="100%">
+                <!-- Ears -->
+                <path d="M20,40 L10,10 L40,25 Z" fill="${color2}" stroke="var(--black)" stroke-width="4" stroke-linejoin="round"/>
+                <path d="M80,40 L90,10 L60,25 Z" fill="${color2}" stroke="var(--black)" stroke-width="4" stroke-linejoin="round"/>
+                <!-- Head -->
+                <circle cx="50" cy="55" r="40" fill="${color1}" stroke="var(--black)" stroke-width="4"/>
+                <!-- Eyes -->
+                <circle cx="35" cy="50" r="5" fill="var(--black)"/>
+                <circle cx="65" cy="50" r="5" fill="var(--black)"/>
+                <!-- Mouth/Nose -->
+                <path d="M45,60 Q50,65 55,60" fill="none" stroke="var(--black)" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="50" cy="55" r="2" fill="var(--black)"/>
+                <!-- Cheek -->
+                <circle cx="25" cy="60" r="4" fill="var(--red)" opacity="0.5"/>
+                <circle cx="75" cy="60" r="4" fill="var(--red)" opacity="0.5"/>
+            </svg>`,
+            
+            `<svg viewBox="0 0 120 90" width="100%" height="100%">
+                <path d="M15,40 L10,5 L35,20 Z" fill="${color2}" stroke="var(--black)" stroke-width="4" stroke-linejoin="round"/>
+                <path d="M105,40 L110,5 L85,20 Z" fill="${color2}" stroke="var(--black)" stroke-width="4" stroke-linejoin="round"/>
+                <rect x="10" y="30" width="100" height="50" rx="25" fill="${color1}" stroke="var(--black)" stroke-width="4"/>
+                <circle cx="40" cy="55" r="4" fill="var(--black)"/>
+                <circle cx="80" cy="55" r="4" fill="var(--black)"/>
+                <path d="M55,65 Q60,70 65,65" fill="none" stroke="var(--black)" stroke-width="3" stroke-linecap="round"/>
+                <!-- Star decoration -->
+                <path d="M20,30 L23,38 L30,40 L24,45 L25,53 L20,48 L15,53 L16,45 L10,40 L17,38 Z" fill="var(--yellow)" stroke="var(--black)" stroke-width="2"/>
+            </svg>`,
+            
+            `<svg viewBox="0 0 100 110" width="100%" height="100%">
+                <path d="M25,50 L15,15 L45,35 Z" fill="${color1}" stroke="var(--black)" stroke-width="4" stroke-linejoin="round"/>
+                <path d="M75,50 L85,15 L55,35 Z" fill="${color1}" stroke="var(--black)" stroke-width="4" stroke-linejoin="round"/>
+                <path d="M10,90 C10,40 90,40 90,90 Z" fill="${color2}" stroke="var(--black)" stroke-width="4"/>
+                <line x1="10" y1="90" x2="90" y2="90" stroke="var(--black)" stroke-width="4"/>
+                <path d="M35,65 Q40,60 45,65" fill="none" stroke="var(--black)" stroke-width="3" stroke-linecap="round"/>
+                <path d="M55,65 Q60,60 65,65" fill="none" stroke="var(--black)" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="50" cy="75" r="8" fill="var(--pink)" stroke="var(--black)" stroke-width="2"/> <!-- Big nose -->
+            </svg>`
+        ];
+        return types[Math.floor(Math.random() * types.length)];
+    }
+
+    handleKeydown(e) {
+        if (!this.isRunning || e.repeat) return;
+        
+        this.synth.playBoing();
+        
+        
+        this.appWindow.classList.remove('shake');
+        void this.appWindow.offsetWidth; 
+        this.appWindow.classList.add('shake');
+
+        this.spawnGiantCat();
+    }
+
+    spawnGiantCat() {
+        const el = document.createElement('div');
+        el.className = 'cat-stamp';
+        
+        
+        const size = Math.random() * 150 + 150; 
+        el.style.width = `${size}px`;
+        el.style.height = `${size}px`;
+
+        
+        const rect = this.playArea.getBoundingClientRect();
+        const x = Math.random() * (rect.width - size);
+        const y = Math.random() * (rect.height - size);
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+
+        
+        const c1 = this.colors[Math.floor(Math.random() * this.colors.length)];
+        let c2 = this.colors[Math.floor(Math.random() * this.colors.length)];
+        while(c2 === c1) c2 = this.colors[Math.floor(Math.random() * this.colors.length)];
+
+        el.innerHTML = this.generateCatSVG(c1, c2);
+
+        
+        const startRot = (Math.random() - 0.5) * 180;
+        const midRot = startRot + (Math.random() - 0.5) * 45;
+        const endRot = startRot + (Math.random() - 0.5) * 20;
+        
+        el.style.setProperty('--rot-start', `${startRot}deg`);
+        el.style.setProperty('--rot-mid', `${midRot}deg`);
+        el.style.setProperty('--rot-end', `${endRot}deg`);
+
+        
+        el.style.filter = `drop-shadow(6px 6px 0px var(--black))`;
+        
+        
+        el.style.animation = `popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards`;
+
+        this.spawnLayer.appendChild(el);
+
+        
+        if (this.spawnLayer.childNodes.length > 40) {
+            const oldest = this.spawnLayer.firstChild;
+            
+            oldest.style.animation = `fallOff 1s ease-in forwards`;
+            setTimeout(() => { if(oldest.parentNode) oldest.remove(); }, 1000);
+        }
+    }
+
+    handleMousemove(e) {
+        if (!this.isRunning) return;
+
+        
+        const dist = Math.hypot(e.clientX - this.lastMousePos.x, e.clientY - this.lastMousePos.y);
+        
+        
+        if (dist > 30) {
+            this.lastMousePos = { x: e.clientX, y: e.clientY };
+            
+            
+            const intensity = 1 - (e.clientY / window.innerHeight);
+            this.synth.playSparkle(intensity);
+
+            this.spawnTrailParticle(e.clientX, e.clientY);
+        }
+    }
+
+    spawnTrailParticle(x, y) {
+        const el = document.createElement('div');
+        el.className = 'trail-particle';
+        
+        
+        const rect = this.playArea.getBoundingClientRect();
+        const localX = x - rect.left;
+        const localY = y - rect.top;
+
+        el.style.left = `${localX - 15}px`; 
+        el.style.top = `${localY - 15}px`;
+        
+        el.innerText = this.emojis[Math.floor(Math.random() * this.emojis.length)];
+        
+        
+        const scale = 0.5 + Math.random();
+        el.style.transform = `scale(${scale})`;
+
+        this.spawnLayer.appendChild(el);
+
+        
+        setTimeout(() => {
+            if (el.parentNode) el.remove();
+        }, 1000);
+    }
+}
+
+
+window.onload = () => {
+    new KittyApp();
+};
+</script>
+
+</body></html>

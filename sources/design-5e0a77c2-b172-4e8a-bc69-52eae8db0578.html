@@ -1,0 +1,528 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Kitty Smasher!</title>
+    <style vid="5">
+        
+
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+        :root {
+            --bg-color: #FFFFFF;
+            --ink-color: #1A1A1A;
+            --blue: #4264EE;
+            --yellow: #F4C127;
+            --red: #F13A59;
+            --light-blue: #1FAAE2;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-color);
+            overflow: hidden;
+            font-family: 'Fredoka One', cursive;
+            
+            cursor: none; 
+            touch-action: none;
+        }
+
+        
+        #ambient-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        
+        #smasher-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; 
+            z-index: 10;
+        }
+
+        
+        #custom-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 40px;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            will-change: transform;
+        }
+
+        
+        #intro-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.9);
+            transition: opacity 0.3s ease-out;
+        }
+
+        #intro-overlay h1 {
+            font-size: clamp(3rem, 8vw, 6rem);
+            color: var(--ink-color);
+            margin: 0;
+            text-align: center;
+            line-height: 1.1;
+            
+            text-shadow: 
+                6px 6px 0 var(--blue),
+                -3px -3px 0 var(--yellow);
+            animation: breathe 2s infinite alternate ease-in-out;
+        }
+
+        #intro-overlay p {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            color: var(--ink-color);
+            margin-top: 20px;
+            background-color: var(--yellow);
+            padding: 10px 20px;
+            border: 4px solid var(--ink-color);
+            border-radius: 20px;
+            box-shadow: 4px 4px 0 var(--ink-color);
+            transform: rotate(-2deg);
+        }
+
+        
+        .spawned-item {
+            position: absolute;
+            pointer-events: none;
+            will-change: transform, opacity;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        
+        .spawned-item svg {
+            display: block;
+            overflow: visible;
+        }
+
+        
+        .spawned-text {
+            font-size: var(--text-size, 80px);
+            font-weight: 400;
+            color: var(--fill-color);
+            -webkit-text-stroke: 4px var(--ink-color);
+            
+            text-shadow: var(--offset-x, 4px) var(--offset-y, 4px) 0 var(--ink-color);
+            white-space: nowrap;
+        }
+
+        
+        @keyframes popOut {
+            0% { 
+                transform: translate(0, 0) scale(0) rotate(var(--start-rot)); 
+                opacity: 1;
+            }
+            15% {
+                transform: translate(var(--mid-x), var(--mid-y)) scale(1.2) rotate(var(--mid-rot));
+            }
+            30% {
+                transform: translate(var(--mid-x), var(--mid-y)) scale(1) rotate(var(--mid-rot));
+                opacity: 1;
+            }
+            100% { 
+                transform: translate(var(--end-x), var(--end-y)) scale(0.5) rotate(var(--end-rot)); 
+                opacity: 0;
+            }
+        }
+
+        @keyframes trailFade {
+            0% {
+                transform: scale(1) rotate(var(--rot));
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0) rotate(calc(var(--rot) + 90deg));
+                opacity: 0;
+            }
+        }
+
+        @keyframes breathe {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+
+        @keyframes ambientDrift {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-100vh) rotate(360deg); }
+        }
+
+        
+        .anim-pop {
+            animation: popOut var(--duration, 1.5s) cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        .anim-trail {
+            animation: trailFade var(--duration, 0.8s) ease-in forwards;
+        }
+    </style>
+</head>
+<body vid="6">
+
+    <div id="ambient-layer" vid="7"></div>
+    <div id="smasher-canvas" vid="8"></div>
+    
+    <div id="custom-cursor" vid="9">
+        
+        <svg viewBox="0 0 100 100" width="40" height="40" vid="10">
+            <g transform="translate(4,4)" fill="#FFFFFF" vid="11">
+                <circle cx="50" cy="65" r="25" vid="12"></circle>
+                <circle cx="25" cy="30" r="15" vid="13"></circle>
+                <circle cx="50" cy="15" r="15" vid="14"></circle>
+                <circle cx="75" cy="30" r="15" vid="15"></circle>
+            </g>
+            <g fill="none" stroke="#1A1A1A" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" vid="16">
+                <circle cx="50" cy="65" r="25" fill="#4264EE" vid="17"></circle>
+                <circle cx="25" cy="30" r="15" fill="#F4C127" vid="18"></circle>
+                <circle cx="50" cy="15" r="15" fill="#F13A59" vid="19"></circle>
+                <circle cx="75" cy="30" r="15" fill="#1FAAE2" vid="20"></circle>
+            </g>
+        </svg>
+    </div>
+
+    <div id="intro-overlay" vid="21">
+        <h1 vid="22">MASH<br vid="23">THE<br vid="24">KEYS!</h1>
+        <p vid="25">Wiggle the mouse!</p>
+    </div>
+
+    <script vid="26">
+        
+
+        const palette = ['#4264EE', '#F4C127', '#F13A59', '#1FAAE2', '#FFFFFF'];
+        const inkColor = '#1A1A1A';
+        const canvas = document.getElementById('smasher-canvas');
+        const intro = document.getElementById('intro-overlay');
+        const cursor = document.getElementById('custom-cursor');
+        const ambientLayer = document.getElementById('ambient-layer');
+        
+        let isStarted = false;
+        let audioCtx;
+        let lastMousePos = { x: 0, y: 0 };
+        let lastTrailTime = 0;
+
+        
+        
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'smash') {
+                
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(100 + Math.random() * 50, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+                
+                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'trail') {
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600 + Math.random() * 400, now);
+                osc.frequency.exponentialRampToValueAtTime(800 + Math.random() * 400, now + 0.1);
+                
+                gainNode.gain.setValueAtTime(0.05, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
+                
+                osc.start(now);
+                osc.stop(now + 0.1);
+            }
+        }
+
+        
+        
+        
+        
+        const SVGLib = {
+            wrap: (inner, width, height, color) => `
+                <svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
+                    <!-- Offset Color Blob (Misregistration effect) -->
+                    <g transform="translate(6, 6)">
+                        ${inner.fill(color)}
+                    </g>
+                    <!-- Clean Black Outline + White masking background -->
+                    <g stroke="${inkColor}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+                        ${inner.stroke(color === '#FFFFFF' ? '#FFFFFF' : '#FFFFFF')}
+                    </g>
+                </svg>
+            `,
+
+            catFace: (color) => SVGLib.wrap({
+                fill: (c) => `
+                    <path d="M10,40 Q10,10 50,10 Q90,10 90,40 Q90,80 50,80 Q10,80 10,40 Z" fill="${c}"/>
+                    <polygon points="10,40 5,5 35,20" fill="${c}"/>
+                    <polygon points="90,40 95,5 65,20" fill="${c}"/>
+                `,
+                stroke: (bg) => `
+                    <path d="M10,40 Q10,10 50,10 Q90,10 90,40 Q90,80 50,80 Q10,80 10,40 Z" fill="${bg}"/>
+                    <polygon points="10,40 5,5 35,20" fill="${bg}"/>
+                    <polygon points="90,40 95,5 65,20" fill="${bg}"/>
+                    <circle cx="35" cy="45" r="5" fill="${inkColor}" stroke="none"/>
+                    <circle cx="65" cy="45" r="5" fill="${inkColor}" stroke="none"/>
+                    <path d="M45,55 Q50,65 55,55" fill="none"/>
+                    <line x1="15" y1="45" x2="-5" y2="40" />
+                    <line x1="15" y1="55" x2="-5" y2="60" />
+                    <line x1="85" y1="45" x2="105" y2="40" />
+                    <line x1="85" y1="55" x2="105" y2="60" />
+                `
+            }, 100, 90, color),
+
+            fishBone: (color) => SVGLib.wrap({
+                fill: (c) => `<path d="M20,50 L80,50 M30,30 L30,70 M50,30 L50,70 M70,40 L70,60" stroke="${c}" stroke-width="20" fill="none"/>`,
+                stroke: (bg) => `
+                    <!-- Background blocker -->
+                    <path d="M20,50 L80,50 M30,30 L30,70 M50,30 L50,70 M70,40 L70,60" stroke="${bg}" stroke-width="20" fill="none"/>
+                    <!-- Actual lines -->
+                    <path d="M20,50 L80,50 M30,30 L30,70 M50,30 L50,70 M70,40 L70,60" fill="none"/>
+                    <polygon points="20,50 5,40 5,60" fill="${bg}"/>
+                `
+            }, 100, 100, color),
+
+            blob: (color) => SVGLib.wrap({
+                fill: (c) => `<path d="M20,30 Q50,-10 80,30 T60,80 Q20,90 20,30" fill="${c}"/>`,
+                stroke: (bg) => `<path d="M20,30 Q50,-10 80,30 T60,80 Q20,90 20,30" fill="${bg}"/>`
+            }, 100, 100, color),
+
+            squiggle: (color) => SVGLib.wrap({
+                fill: (c) => `<path d="M10,50 Q25,10 40,50 T70,50 T100,50" stroke="${c}" stroke-width="15" fill="none"/>`,
+                stroke: (bg) => `
+                    <path d="M10,50 Q25,10 40,50 T70,50 T100,50" stroke="${bg}" stroke-width="15" fill="none"/>
+                    <path d="M10,50 Q25,10 40,50 T70,50 T100,50" fill="none"/>
+                `
+            }, 110, 100, color)
+        };
+
+        const onomatopoeia = ['MEOW!', 'MROW', 'PURRR', 'BAP!', 'HISS', 'SCRATCH', 'SQUISH'];
+        const doodleTypes = [SVGLib.catFace, SVGLib.fishBone, SVGLib.blob, SVGLib.squiggle];
+
+        
+
+        function getRandomColor() {
+            return palette[Math.floor(Math.random() * palette.length)];
+        }
+
+        function createSpawnContainer(x, y) {
+            const el = document.createElement('div');
+            el.className = 'spawned-item';
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            
+            el.style.transformOrigin = 'center center';
+            el.style.marginLeft = '-50px'; 
+            el.style.marginTop = '-50px';
+            return el;
+        }
+
+        function spawnSmash(x, y, keyChar) {
+            const el = createSpawnContainer(x, y);
+            const color = getRandomColor();
+            
+            
+            if (Math.random() > 0.5) {
+                
+                const SvgFunc = doodleTypes[Math.floor(Math.random() * doodleTypes.length)];
+                
+                const scale = 2 + Math.random() * 3; 
+                const rawSvg = SvgFunc(color);
+                
+                el.innerHTML = rawSvg.replace(/width="(\d+)" height="(\d+)"/, `width="${100*scale}" height="${100*scale}"`);
+            } else {
+                
+                const text = document.createElement('div');
+                text.className = 'spawned-text';
+                
+                const word = (keyChar && keyChar.length === 1 && Math.random() > 0.3) ? keyChar.toUpperCase() : onomatopoeia[Math.floor(Math.random() * onomatopoeia.length)];
+                text.innerText = word;
+                text.style.setProperty('--fill-color', color);
+                text.style.setProperty('--text-size', `${80 + Math.random() * 100}px`);
+                
+                
+                text.style.setProperty('--offset-x', `${(Math.random() > 0.5 ? 1 : -1) * (4 + Math.random() * 6)}px`);
+                text.style.setProperty('--offset-y', `${(Math.random() > 0.5 ? 1 : -1) * (4 + Math.random() * 6)}px`);
+                
+                el.appendChild(text);
+                
+                el.style.marginLeft = '-100px'; 
+                el.style.marginTop = '-50px';
+            }
+
+            
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 100 + Math.random() * 300;
+            
+            el.style.setProperty('--start-rot', `${(Math.random() - 0.5) * 45}deg`);
+            el.style.setProperty('--mid-x', `${Math.cos(angle) * distance * 0.2}px`);
+            el.style.setProperty('--mid-y', `${Math.sin(angle) * distance * 0.2}px`);
+            el.style.setProperty('--mid-rot', `${(Math.random() - 0.5) * 90}deg`);
+            el.style.setProperty('--end-x', `${Math.cos(angle) * distance}px`);
+            el.style.setProperty('--end-y', `${Math.sin(angle) * distance + 200}px`); 
+            el.style.setProperty('--end-rot', `${(Math.random() - 0.5) * 180}deg`);
+            el.style.setProperty('--duration', `${1 + Math.random() * 1}s`);
+
+            el.classList.add('anim-pop');
+            canvas.appendChild(el);
+
+            
+            setTimeout(() => { if(el.parentNode) el.remove(); }, 2000);
+            
+            playSound('smash');
+        }
+
+        function spawnTrail(x, y) {
+            const el = createSpawnContainer(x, y);
+            const color = getRandomColor();
+            
+            
+            const isCat = Math.random() > 0.7;
+            const rawSvg = isCat ? SVGLib.catFace(color) : SVGLib.blob(color);
+            el.innerHTML = rawSvg.replace(/width="(\d+)" height="(\d+)"/, `width="40" height="40"`);
+            
+            
+            el.style.marginLeft = '-20px'; 
+            el.style.marginTop = '-20px';
+
+            el.style.setProperty('--rot', `${Math.random() * 360}deg`);
+            el.style.setProperty('--duration', `${0.4 + Math.random() * 0.4}s`);
+
+            el.classList.add('anim-trail');
+            canvas.appendChild(el);
+
+            setTimeout(() => { if(el.parentNode) el.remove(); }, 1000);
+            playSound('trail');
+        }
+
+        
+        
+        function generateAmbient() {
+            const numDebris = 30;
+            for(let i=0; i<numDebris; i++) {
+                const el = document.createElement('div');
+                el.style.position = 'absolute';
+                el.style.left = `${Math.random() * 100}vw`;
+                el.style.top = `${Math.random() * 100}vh`;
+                
+                
+                const isDot = Math.random() > 0.5;
+                const size = 10 + Math.random() * 20;
+                
+                if (isDot) {
+                    el.innerHTML = `<svg width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${size/2 - 2}" fill="${inkColor}"/></svg>`;
+                } else {
+                    el.innerHTML = `<svg width="${size*2}" height="${size}"><line x1="0" y1="${size/2}" x2="${size*2}" y2="${size/2}" stroke="${inkColor}" stroke-width="4" stroke-linecap="round"/></svg>`;
+                    el.style.transform = `rotate(${Math.random() * 360}deg)`;
+                }
+                
+                
+                el.style.animation = `ambientDrift ${20 + Math.random() * 30}s linear infinite`;
+                el.style.animationDelay = `-${Math.random() * 30}s`; 
+                
+                ambientLayer.appendChild(el);
+            }
+        }
+
+        
+
+        function startGame() {
+            if (isStarted) return;
+            isStarted = true;
+            intro.style.opacity = '0';
+            setTimeout(() => intro.remove(), 300);
+            initAudio();
+        }
+
+        window.addEventListener('keydown', (e) => {
+            startGame();
+            
+            if(e.key !== 'F12' && e.key !== 'F5') e.preventDefault(); 
+            
+            
+            const x = Math.random() * window.innerWidth;
+            const y = Math.random() * window.innerHeight;
+            spawnSmash(x, y, e.key);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            
+            cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+            
+            if (!isStarted) return;
+
+            const now = Date.now();
+            
+            if (now - lastTrailTime > 40) { 
+                
+                const dx = e.clientX - lastMousePos.x;
+                const dy = e.clientY - lastMousePos.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if (dist > 15) {
+                    
+                    const offsetX = (Math.random() - 0.5) * 30;
+                    const offsetY = (Math.random() - 0.5) * 30;
+                    spawnTrail(e.clientX + offsetX, e.clientY + offsetY);
+                    lastMousePos = { x: e.clientX, y: e.clientY };
+                    lastTrailTime = now;
+                }
+            }
+        });
+
+        window.addEventListener('mousedown', (e) => {
+            startGame();
+            spawnSmash(e.clientX, e.clientY, null);
+        });
+
+        
+        generateAmbient();
+
+    </script>
+
+</body></html>

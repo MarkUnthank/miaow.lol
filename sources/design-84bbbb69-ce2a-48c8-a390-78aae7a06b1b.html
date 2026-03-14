@@ -1,0 +1,644 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" vid="3">
+    <title vid="4">Kitty Mash - Sensory Play App</title>
+    
+    <style vid="5">
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Outfit:wght@600;800&family=Playfair+Display:ital,wght@1,700&display=swap');
+
+        :root {
+            --bg-blue: #b4d5e7;
+            --lavender: #d4c5f9;
+            --pink: #f9709d;
+            --yellow: #fce554;
+            --green: #51ba5d;
+            --orange: #fd764a;
+            --purple: #8b4fb8;
+            --aqua: #48b2c6;
+            --text-dark: #2a2a2a;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-color: var(--bg-blue);
+            font-family: 'Outfit', sans-serif;
+            touch-action: none; 
+        }
+
+        
+        .bg-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        
+        .bg-wave-1 {
+            position: absolute;
+            top: -20%; right: -10%;
+            width: 80vw; height: 80vw;
+            background: var(--yellow);
+            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+            border: 8px solid var(--text-dark);
+            animation: morph 15s ease-in-out infinite alternate;
+        }
+
+        .bg-wave-2 {
+            position: absolute;
+            bottom: -20%; left: -10%;
+            width: 70vw; height: 70vw;
+            background: var(--purple);
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            border: 8px solid var(--text-dark);
+            animation: morph 20s ease-in-out infinite alternate-reverse;
+        }
+
+        .bg-wave-3 {
+            position: absolute;
+            bottom: -10%; right: -5%;
+            width: 50vw; height: 50vw;
+            background: var(--pink);
+            border-radius: 50%;
+            border: 8px solid var(--text-dark);
+        }
+
+        @keyframes morph {
+            0% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+            100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+        }
+
+        
+        .app-container {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90vw;
+            height: 90vh;
+            max-width: 1400px;
+            background-color: var(--pink);
+            border: 6px solid var(--text-dark);
+            border-radius: 0 0 16px 16px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 
+                12px 12px 0 var(--green),
+                24px 24px 0 var(--text-dark);
+        }
+
+        .window-header {
+            background-color: var(--lavender);
+            border-bottom: 6px solid var(--text-dark);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 12px 12px 0 0;
+            position: absolute;
+            top: -50px; left: -6px; right: -6px;
+            height: 50px;
+            border: 6px solid var(--text-dark);
+            border-bottom: none;
+        }
+
+        .window-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            border: 3px solid var(--text-dark);
+        }
+        .dot:nth-child(1) { background-color: var(--pink); }
+        .dot:nth-child(2) { background-color: var(--yellow); }
+        .dot:nth-child(3) { background-color: var(--green); }
+
+        .window-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            color: var(--purple);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .window-subtitle {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            color: var(--text-dark);
+            font-size: 0.8rem;
+        }
+
+        
+        .play-area {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+            border-radius: 0 0 10px 10px;
+            cursor: crosshair;
+            background: radial-gradient(circle at center, #ff9ebf 0%, var(--pink) 100%);
+        }
+
+        
+        .landscape-hill {
+            position: absolute;
+            bottom: -20px;
+            left: -5%;
+            width: 110%;
+            height: 30%;
+            background-color: #fce554; 
+            border-top: 6px solid var(--text-dark);
+            border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .landscape-hill-2 {
+            position: absolute;
+            bottom: -10px;
+            right: -10%;
+            width: 60%;
+            height: 40%;
+            background-color: var(--aqua);
+            border: 6px solid var(--text-dark);
+            border-radius: 50% 50% 0 0;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(249, 112, 157, 0.9);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            transition: opacity 0.3s ease;
+        }
+
+        .overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        
+        .stacked-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 12vw;
+            line-height: 0.85;
+            color: var(--yellow);
+            text-align: center;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            
+            text-shadow: 
+                -2px -2px 0 var(--text-dark),
+                 2px -2px 0 var(--text-dark),
+                -2px  2px 0 var(--text-dark),
+                 2px  2px 0 var(--text-dark),
+                 0    4px 0 var(--text-dark),
+                 4px  6px 0 var(--text-dark),
+                 4px  8px 0 var(--green),
+                 6px  12px 0 var(--green),
+                 8px  14px 0 var(--text-dark),
+                 8px  16px 0 var(--purple),
+                 12px 20px 0 var(--purple),
+                 14px 22px 0 var(--text-dark);
+            transform: rotate(-3deg);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .stacked-title span {
+            display: block;
+            font-size: 14vw;
+            color: var(--yellow);
+        }
+
+        .overlay-instruction {
+            margin-top: 60px;
+            background-color: var(--lavender);
+            border: 4px solid var(--text-dark);
+            padding: 12px 32px;
+            border-radius: 50px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 4px 4px 0 var(--text-dark);
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: rotate(-3deg) translateY(0); }
+            50% { transform: rotate(-1deg) translateY(-15px); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+
+        
+        .spawn {
+            position: absolute;
+            pointer-events: none;
+            z-index: 50;
+            will-change: transform, opacity;
+            transform-origin: center center;
+        }
+
+        .spawn-emoji {
+            font-size: 4rem;
+            filter: drop-shadow(3px 3px 0px var(--text-dark));
+        }
+
+        .spawn-text {
+            font-family: 'Fredoka One', cursive;
+            font-size: 6rem;
+            color: #fff;
+            text-transform: uppercase;
+            -webkit-text-stroke: 3px var(--text-dark);
+        }
+
+        
+        .spawn-svg {
+            width: 100px;
+            height: 100px;
+        }
+
+        
+        .anim-pop {
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, fadeOut 0.5s ease-in 1.5s forwards;
+        }
+
+        .anim-float-up {
+            animation: floatUp 2s ease-out forwards;
+        }
+
+        .anim-splat {
+            animation: splat 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, fadeOut 0.5s ease-in 2s forwards;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0) rotate(-20deg); }
+            80% { transform: scale(1.2) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; transform: scale(1) translateY(0); }
+            100% { opacity: 0; transform: scale(0.8) translateY(50px); }
+        }
+
+        @keyframes floatUp {
+            0% { transform: scale(0.5) translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: scale(1.5) translateY(-200px) rotate(45deg); opacity: 0; }
+        }
+
+        @keyframes splat {
+            0% { transform: scale(3) translate(0, -50px); opacity: 0; }
+            100% { transform: scale(1) translate(0, 0); opacity: 1; }
+        }
+
+        
+        .flash {
+            position: absolute;
+            inset: 0;
+            background-color: rgba(255, 255, 255, 0.4);
+            z-index: 90;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .flash.active {
+            animation: flashAnim 0.1s ease-out;
+        }
+
+        @keyframes flashAnim {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        
+        
+        .badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background: var(--yellow);
+            border: 4px solid var(--text-dark);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            transform: rotate(15deg);
+            z-index: 5;
+            box-shadow: 4px 4px 0 var(--text-dark);
+        }
+
+    </style>
+</head>
+<body vid="6">
+
+    
+    <div class="bg-layer" vid="7">
+        <div class="bg-wave-1" vid="8"></div>
+        <div class="bg-wave-2" vid="9"></div>
+        <div class="bg-wave-3" vid="10"></div>
+    </div>
+
+    
+    <div class="app-container" vid="11">
+        <div class="window-header" vid="12">
+            <div class="window-dots" vid="13">
+                <div class="dot" vid="14"></div>
+                <div class="dot" vid="15"></div>
+                <div class="dot" vid="16"></div>
+            </div>
+            <div class="window-subtitle" vid="17">A sensory experience by You</div>
+            <div class="window-title" vid="18">C.A.T. OS v2.0</div>
+        </div>
+
+        <div class="play-area" id="playArea" vid="19">
+            <div class="landscape-hill" vid="20"></div>
+            <div class="landscape-hill-2" vid="21"></div>
+            
+            <div class="badge" vid="22">FUN!</div>
+
+            
+            <div class="overlay" id="overlay" vid="23">
+                <h1 class="stacked-title" vid="24">KITTY<br vid="25"><span vid="26">MASH</span></h1>
+                <div class="overlay-instruction" vid="27">Click &amp; Mash Keys!</div>
+            </div>
+
+            <div class="flash" id="flash" vid="28"></div>
+        </div>
+    </div>
+
+    <script vid="29">
+        const playArea = document.getElementById('playArea');
+        const overlay = document.getElementById('overlay');
+        const flash = document.getElementById('flash');
+        
+        let isStarted = false;
+        let audioCtx;
+        
+        
+        
+        const catEmojis = ['🐱', '🐈', '😻', '😸', '😹', '😽', '🙀', '🐾', '🧶', '🐁', '🐟', '🥛'];
+        const actionWords = ['MEOW!', 'PURR', 'BOOP', 'SQUISH', 'YAY!', 'POW', 'MASH', 'WOW!'];
+        
+        
+        const colors = [
+            '#fce554', 
+            '#51ba5d', 
+            '#fd764a', 
+            '#8b4fb8', 
+            '#48b2c6', 
+            '#f9709d'  
+        ];
+
+        
+        const svgAssets = [
+            
+            `<svg class="spawn-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 10C55 10 60 20 60 30C70 20 80 25 80 35C90 35 90 45 80 50C90 55 90 65 80 65C80 75 70 80 60 70C60 80 55 90 50 90C45 90 40 80 40 70C30 80 20 75 20 65C10 65 10 55 20 50C10 45 10 35 20 35C20 25 30 20 40 30C40 20 45 10 50 10Z" fill="white" stroke="#2a2a2a" stroke-width="4" stroke-linejoin="round"/>
+                <circle cx="50" cy="50" r="15" fill="#fce554" stroke="#2a2a2a" stroke-width="4"/>
+                <circle cx="45" cy="48" r="2" fill="#2a2a2a"/>
+                <circle cx="55" cy="48" r="2" fill="#2a2a2a"/>
+                <path d="M45 54C45 54 48 58 55 54" stroke="#2a2a2a" stroke-width="2" stroke-linecap="round"/>
+            </svg>`,
+            
+            `<svg class="spawn-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 10L60 40L90 50L60 60L50 90L40 60L10 50L40 40L50 10Z" fill="#48b2c6" stroke="#2a2a2a" stroke-width="4" stroke-linejoin="round"/>
+            </svg>`,
+            
+            `<svg class="spawn-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M30 60C20 60 15 50 20 40C25 30 35 25 45 30C50 15 70 15 80 30C90 35 90 55 75 60C70 70 50 70 45 60C35 65 25 65 30 60Z" fill="#8b4fb8" stroke="#2a2a2a" stroke-width="4" stroke-linejoin="round"/>
+            </svg>`,
+            
+            `<svg class="spawn-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 80V30L35 45L50 35L65 45L85 30V80C85 85.5228 80.5228 90 75 90H25C19.4772 90 15 85.5228 15 80Z" fill="#fd764a" stroke="#2a2a2a" stroke-width="4" stroke-linejoin="round"/>
+                <circle cx="35" cy="60" r="4" fill="#2a2a2a"/>
+                <circle cx="65" cy="60" r="4" fill="#2a2a2a"/>
+                <path d="M50 65V75" stroke="#2a2a2a" stroke-width="3" stroke-linecap="round"/>
+                <path d="M40 70Q50 75 60 70" stroke="#2a2a2a" stroke-width="3" stroke-linecap="round"/>
+            </svg>`
+        ];
+
+        
+        
+        function initAudio() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+        }
+
+        
+        function playBloop() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            
+            const frequencies = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25]; 
+            osc.frequency.value = frequencies[Math.floor(Math.random() * frequencies.length)];
+            
+            osc.type = Math.random() > 0.5 ? 'sine' : 'triangle';
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start();
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        function playChord() {
+            if (!audioCtx) return;
+            
+            for(let i=0; i<3; i++) {
+                setTimeout(playBloop, i * 50);
+            }
+        }
+
+        
+
+        function randomRange(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function getRandomColor() {
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function createSpawnElement(x, y, type) {
+            const el = document.createElement('div');
+            el.className = 'spawn';
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+
+            
+            const rot = randomRange(-30, 30);
+            el.style.transform = `rotate(${rot}deg)`;
+
+            if (type === 'trail') {
+                
+                el.innerText = Math.random() > 0.5 ? '⭐' : '🐾';
+                el.style.fontSize = `${randomRange(1, 2.5)}rem`;
+                el.classList.add('anim-float-up');
+            } 
+            else if (type === 'click') {
+                
+                if (Math.random() > 0.4) {
+                    el.innerHTML = svgAssets[Math.floor(Math.random() * svgAssets.length)];
+                    
+                    if(Math.random() > 0.5) {
+                        const paths = el.querySelectorAll('path, circle');
+                        paths.forEach(p => {
+                            if(p.getAttribute('fill') !== 'none' && p.getAttribute('fill') !== '#2a2a2a') {
+                                p.setAttribute('fill', getRandomColor());
+                            }
+                        });
+                    }
+                } else {
+                    el.innerText = catEmojis[Math.floor(Math.random() * catEmojis.length)];
+                    el.classList.add('spawn-emoji');
+                    el.style.fontSize = `${randomRange(4, 7)}rem`;
+                }
+                el.classList.add('anim-pop');
+            } 
+            else if (type === 'mash') {
+                
+                const isWord = Math.random() > 0.3;
+                if (isWord) {
+                    const word = actionWords[Math.floor(Math.random() * actionWords.length)];
+                    el.innerText = word;
+                    el.classList.add('spawn-text');
+                    el.style.fontSize = `${randomRange(6, 12)}vw`; 
+                    
+                    
+                    const shadowColor1 = getRandomColor();
+                    const shadowColor2 = getRandomColor();
+                    el.style.color = getRandomColor();
+                    el.style.textShadow = `
+                        4px 4px 0 var(--text-dark),
+                        8px 8px 0 ${shadowColor1},
+                        12px 12px 0 var(--text-dark),
+                        16px 16px 0 ${shadowColor2}
+                    `;
+                } else {
+                    el.innerText = catEmojis[Math.floor(Math.random() * catEmojis.length)];
+                    el.classList.add('spawn-emoji');
+                    el.style.fontSize = `${randomRange(10, 15)}vw`;
+                }
+                
+                
+                el.style.left = `${randomRange(20, 80)}%`;
+                el.style.top = `${randomRange(20, 80)}%`;
+                el.classList.add('anim-splat');
+            }
+
+            playArea.appendChild(el);
+
+            
+            setTimeout(() => {
+                if (el.parentNode) {
+                    el.parentNode.removeChild(el);
+                }
+            }, 3000); 
+        }
+
+        
+
+        
+        overlay.addEventListener('click', (e) => {
+            if (!isStarted) {
+                initAudio();
+                isStarted = true;
+                overlay.classList.add('hidden');
+                e.stopPropagation(); 
+            }
+        });
+
+        
+        let lastMoveTime = 0;
+        playArea.addEventListener('mousemove', (e) => {
+            if (!isStarted) return;
+            const now = Date.now();
+            
+            if (now - lastMoveTime > 50) {
+                const rect = playArea.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                createSpawnElement(x, y, 'trail');
+                if(Math.random() > 0.7) playBloop(); 
+                lastMoveTime = now;
+            }
+        });
+
+        
+        playArea.addEventListener('mousedown', (e) => {
+            if (!isStarted) return;
+            const rect = playArea.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            
+            for(let i=0; i < randomRange(2, 5); i++) {
+                setTimeout(() => {
+                    createSpawnElement(x + randomRange(-50, 50), y + randomRange(-50, 50), 'click');
+                }, i * 50);
+            }
+            playChord();
+        });
+
+        
+        window.addEventListener('keydown', (e) => {
+            if (!isStarted) return;
+            
+            if (['Meta', 'Control', 'Alt', 'Shift', 'Tab', 'Escape'].includes(e.key)) return;
+
+            
+            flash.classList.remove('active');
+            void flash.offsetWidth; 
+            flash.classList.add('active');
+
+            
+            document.querySelector('.app-container').style.transform = `translate(calc(-50% + ${randomRange(-10, 10)}px), calc(-50% + ${randomRange(-10, 10)}px))`;
+            setTimeout(() => {
+                document.querySelector('.app-container').style.transform = 'translate(-50%, -50%)';
+            }, 50);
+
+            createSpawnElement(0, 0, 'mash'); 
+            playChord();
+        });
+
+    </script>
+
+</body></html>

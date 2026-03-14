@@ -1,3 +1,3 @@
-# kittyfingers.xyz
+# miaow.lol
 
-Placeholder repository.
+Repository for [miaow.lol](https://miaow.lol).
