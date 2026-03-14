@@ -321,6 +321,15 @@ export function ExperienceDocument({ className = '', html, mode = 'full', previe
       ? SilentAudioContext
       : createTrackedAudioConstructor(ownerWindow.webkitAudioContext, audioContexts);
     const fullscreenApi = isPreview ? null : getFullscreenApi(ownerWindow);
+    const previewAppApi = {
+      fullscreen: {
+        exit: () => Promise.resolve(undefined),
+        isActive: () => false,
+        request: () => Promise.resolve(undefined),
+        toggle: () => Promise.resolve(undefined),
+      },
+    };
+    const runtimeAppApi = isPreview ? previewAppApi : ownerWindow[APP_API_NAME] ?? null;
     let previewTick = 0;
 
     bodyElement.className = `toy-body ${isPreview ? 'toy-body--preview' : ''}`.trim();
@@ -578,8 +587,8 @@ export function ExperienceDocument({ className = '', html, mode = 'full', previe
       },
     });
 
-    runtimeWindow[APP_API_NAME] = ownerWindow[APP_API_NAME] ?? null;
-    runtimeWindow.miaowApp = ownerWindow[APP_API_NAME] ?? null;
+    runtimeWindow[APP_API_NAME] = runtimeAppApi;
+    runtimeWindow.miaowApp = runtimeAppApi;
     runtimeWindow.requestFullscreen = requestAppFullscreen;
     runtimeWindow.webkitRequestFullscreen = requestAppFullscreen;
     runtimeWindow.webkitRequestFullScreen = requestAppFullscreen;
