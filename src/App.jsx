@@ -117,12 +117,14 @@ export default function App() {
   const requestFullscreenRef = useRef(() => Promise.resolve(undefined));
   const exitFullscreenRef = useRef(() => Promise.resolve(undefined));
   const toggleFullscreenRef = useRef(() => Promise.resolve(undefined));
+  const isMutedRef = useRef(false);
   const seenExperienceIndexesRef = useRef(initialAppState.seenIndices);
   const historyStepRef = useRef(initialAppState.step);
   const [mode, setMode] = useState(initialAppState.mode);
   const [activeIndex, setActiveIndex] = useState(initialAppState.activeIndex);
   const [currentIndex, setCurrentIndex] = useState(initialAppState.currentIndex);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
   const themedExperience = useMemo(
     () => experiences[mode === 'player' ? currentIndex : activeIndex],
@@ -347,12 +349,22 @@ export default function App() {
     await requestFullscreen();
   }
 
+  function toggleMuted() {
+    setIsMuted((previousMuted) => !previousMuted);
+  }
+
   requestFullscreenRef.current = requestFullscreen;
   exitFullscreenRef.current = exitFullscreen;
   toggleFullscreenRef.current = togglePlayerFullscreen;
+  isMutedRef.current = isMuted;
 
   useEffect(() => {
     const appApi = {
+      audio: {
+        isMuted: () => isMutedRef.current,
+        setMuted: (nextMuted) => setIsMuted(Boolean(nextMuted)),
+        toggle: () => setIsMuted((previousMuted) => !previousMuted),
+      },
       fullscreen: {
         exit: () => exitFullscreenRef.current(),
         isActive: () => Boolean(document.fullscreenElement),
@@ -378,16 +390,17 @@ export default function App() {
         <div className="ambient-blob ambient-blob--c" />
         <div className="ambient-grid" />
       </div>
-
       <section className={`screen-layer lobby-layer ${mode === 'lobby' ? 'is-active' : 'is-hidden'}`}>
         <Lobby
           experiences={experiences}
           activeIndex={activeIndex}
           isFullscreen={isFullscreen}
+          isMuted={isMuted}
           onActiveIndexChange={setActiveIndex}
           onLaunch={openExperience}
           onRandom={openRandomExperience}
           onToggleFullscreen={togglePlayerFullscreen}
+          onToggleMute={toggleMuted}
         />
       </section>
 
@@ -396,10 +409,12 @@ export default function App() {
           <Player
             experience={experiences[currentIndex]}
             isFullscreen={isFullscreen}
+            isMuted={isMuted}
             onBack={goBackToLobby}
             onPrevious={showPreviousExperience}
             onRandom={showRandomExperience}
             onToggleFullscreen={togglePlayerFullscreen}
+            onToggleMute={toggleMuted}
           />
         </section>
       ) : null}

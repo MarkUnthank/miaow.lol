@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { act, useState } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { Lobby } from './Lobby';
-import { LOOP_COPY_COUNT } from './lobbyLoop';
+import { getCenteredLoopIndex, LOOP_COPY_COUNT } from './lobbyLoop';
 
 vi.mock('./PreviewArt', () => ({
   PreviewArt: ({ experience }) => <div data-testid={`preview-${experience.id}`} />,
@@ -32,6 +32,37 @@ function createExperiences() {
     theme,
     preload: vi.fn(),
   }));
+}
+
+function applyTrackGeometry(container) {
+  const track = container.querySelector('.carousel-track');
+  const cards = Array.from(container.querySelectorAll('.toy-card'));
+
+  Object.defineProperty(track, 'clientWidth', {
+    configurable: true,
+    value: 600,
+  });
+
+  cards.forEach((card, index) => {
+    Object.defineProperty(card, 'clientWidth', {
+      configurable: true,
+      value: 200,
+    });
+    Object.defineProperty(card, 'offsetLeft', {
+      configurable: true,
+      value: index * 220,
+    });
+    Object.defineProperty(card, 'offsetWidth', {
+      configurable: true,
+      value: 200,
+    });
+  });
+
+  return { cards, track };
+}
+
+function getCenteredScrollLeft(track, card) {
+  return card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2;
 }
 
 describe('Lobby', () => {
@@ -78,6 +109,43 @@ describe('Lobby', () => {
 
       fireEvent.scroll(container.querySelector('.carousel-track'));
       vi.runAllTimers();
+
+      expect(onActiveIndexChange).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('ignores delayed scroll events that were not preceded by user input', () => {
+    vi.useFakeTimers();
+
+    try {
+      const onActiveIndexChange = vi.fn();
+      const experiences = createExperiences();
+      const { container } = render(
+        <Lobby
+          experiences={experiences}
+          activeIndex={0}
+          isFullscreen={false}
+          onActiveIndexChange={onActiveIndexChange}
+          onLaunch={vi.fn()}
+          onRandom={vi.fn()}
+          onToggleFullscreen={vi.fn()}
+        />,
+      );
+      const { cards, track } = applyTrackGeometry(container);
+      const betaVirtualIndex = getCenteredLoopIndex(experiences.length, 1);
+
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+
+      track.scrollLeft = getCenteredScrollLeft(track, cards[betaVirtualIndex]);
+      fireEvent.scroll(track);
+
+      act(() => {
+        vi.advanceTimersByTime(1);
+      });
 
       expect(onActiveIndexChange).not.toHaveBeenCalled();
     } finally {

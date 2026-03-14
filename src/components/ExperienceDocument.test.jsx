@@ -80,4 +80,50 @@ describe('ExperienceDocument', () => {
       expect(toggleSpy).not.toHaveBeenCalled();
     });
   });
+
+  it('mutes tracked audio elements and updates them when the mute state changes', async () => {
+    const createdAudio = [];
+    const OriginalAudio = window.Audio;
+
+    class MockAudio {
+      constructor() {
+        this.muted = false;
+        createdAudio.push(this);
+      }
+    }
+
+    Object.defineProperty(window, 'Audio', {
+      configurable: true,
+      value: MockAudio,
+      writable: true,
+    });
+
+    const html = `
+      <div>audio toy</div>
+      <script>
+        window.__toyAudio = new Audio();
+      </script>
+    `;
+
+    try {
+      const { rerender } = render(<ExperienceDocument html={html} muted title="Audio toy" />);
+
+      await waitFor(() => {
+        expect(createdAudio).toHaveLength(1);
+        expect(createdAudio[0].muted).toBe(true);
+      });
+
+      rerender(<ExperienceDocument html={html} muted={false} title="Audio toy" />);
+
+      await waitFor(() => {
+        expect(createdAudio[0].muted).toBe(false);
+      });
+    } finally {
+      Object.defineProperty(window, 'Audio', {
+        configurable: true,
+        value: OriginalAudio,
+        writable: true,
+      });
+    }
+  });
 });

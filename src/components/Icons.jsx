@@ -76,6 +76,17 @@ export function ExpandIcon({ className }) {
   );
 }
 
+export function SpeakerIcon({ className, muted = false }) {
+  return (
+    <IconBase className={className}>
+      <path d="M5 10v4h4l5 4V6l-5 4H5Z" />
+      <path d="M17 9.5a3.5 3.5 0 0 1 0 5" />
+      <path d="M19.5 7a7 7 0 0 1 0 10" />
+      {muted ? <path d="M5 19 19 5" stroke="#d93025" strokeWidth="2.4" /> : null}
+    </IconBase>
+  );
+}
+
 export function ShareIcon({ className }) {
   return (
     <IconBase className={className}>
