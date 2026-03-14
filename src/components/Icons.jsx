@@ -79,3 +79,15 @@ export function ShareIcon({ className }) {
     </IconBase>
   );
 }
+
+export function DieIcon({ className }) {
+  return (
+    <IconBase className={className}>
+      <rect height="16" rx="3.5" width="16" x="4" y="4" />
+      <circle cx="9" cy="9" fill="currentColor" r="0.9" stroke="none" />
+      <circle cx="15" cy="15" fill="currentColor" r="0.9" stroke="none" />
+      <circle cx="15" cy="9" fill="currentColor" r="0.9" stroke="none" />
+      <circle cx="9" cy="15" fill="currentColor" r="0.9" stroke="none" />
+    </IconBase>
+  );
+}

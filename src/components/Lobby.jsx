@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeftIcon, ArrowRightIcon, ExpandIcon } from './Icons';
+import { ArrowLeftIcon, ArrowRightIcon, DieIcon, ExpandIcon } from './Icons';
 import { PreviewArt } from './PreviewArt';
 import { getCenteredLoopIndex, getLoopRecenterCopyShift, getNearestLoopIndex, LOOP_COPY_COUNT } from './lobbyLoop';
 
-export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexChange, onLaunch, onToggleFullscreen }) {
+export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexChange, onLaunch, onRandom, onToggleFullscreen }) {
   const trackRef = useRef(null);
   const cardRefs = useRef([]);
   const scrollFrameRef = useRef(0);
@@ -337,6 +337,13 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
         <button className={`action-button action-button--dock ${isFullscreen ? 'is-armed' : ''}`.trim()} onClick={onToggleFullscreen} type="button">
           <ExpandIcon className="action-button__icon" />
           <span>{isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}</span>
+        </button>
+      </div>
+
+      <div className="random-dock">
+        <button className="action-button action-button--dock action-button--random" onClick={onRandom} type="button">
+          <DieIcon className="action-button__icon" />
+          <span>Random toy</span>
         </button>
       </div>
     </div>

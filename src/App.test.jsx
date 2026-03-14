@@ -41,7 +41,7 @@ vi.mock('./components/Lobby', async () => {
   const { jsx, jsxs } = await import('react/jsx-runtime');
 
   return {
-    Lobby: ({ activeIndex, isFullscreen, onLaunch, onToggleFullscreen }) =>
+    Lobby: ({ activeIndex, isFullscreen, onLaunch, onRandom, onToggleFullscreen }) =>
       jsxs('div', {
         'data-testid': 'lobby',
         children: [
@@ -49,6 +49,7 @@ vi.mock('./components/Lobby', async () => {
           jsx('div', { 'data-testid': 'lobby-fullscreen', children: String(isFullscreen) }),
           jsx('button', { onClick: () => onLaunch(1), type: 'button', children: 'launch-second' }),
           jsx('button', { onClick: () => onLaunch(0), type: 'button', children: 'launch-first' }),
+          jsx('button', { onClick: onRandom, type: 'button', children: 'random-toy' }),
           jsx('button', { onClick: onToggleFullscreen, type: 'button', children: 'toggle-lobby-fullscreen' }),
         ],
       }),
@@ -296,5 +297,15 @@ describe('App', () => {
 
     expect(screen.getByTestId('player-title')).toHaveTextContent('Box Fort');
     expect(window.history.state).toMatchObject({ mode: 'player', currentIndex: 1, step: 0 });
+  });
+
+  it('launches a random experience from the lobby button', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'random-toy' }));
+
+    expect(screen.getByTestId('player-title')).toHaveTextContent('Nap Nebula');
+    expect(window.history.state).toMatchObject({ mode: 'player', currentIndex: 2, step: 1 });
   });
 });

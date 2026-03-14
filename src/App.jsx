@@ -273,6 +273,10 @@ export default function App() {
     );
   }
 
+  function openRandomExperience() {
+    openExperience(getRandomExperienceIndex(activeIndex));
+  }
+
   function goBackToLobby() {
     if (historyReadyRef.current && hasRootHistoryRef.current && historyStepRef.current > 0) {
       window.history.go(-historyStepRef.current);
@@ -364,6 +368,7 @@ export default function App() {
           isFullscreen={isFullscreen}
           onActiveIndexChange={setActiveIndex}
           onLaunch={openExperience}
+          onRandom={openRandomExperience}
           onToggleFullscreen={togglePlayerFullscreen}
         />
       </section>

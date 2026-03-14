@@ -51,6 +51,7 @@ describe('Lobby', () => {
         isFullscreen={false}
         onActiveIndexChange={vi.fn()}
         onLaunch={vi.fn()}
+        onRandom={vi.fn()}
         onToggleFullscreen={vi.fn()}
       />,
     );
@@ -66,6 +67,7 @@ describe('Lobby', () => {
         isFullscreen={false}
         onActiveIndexChange={vi.fn()}
         onLaunch={vi.fn()}
+        onRandom={vi.fn()}
         onToggleFullscreen={vi.fn()}
       />,
     );
@@ -91,6 +93,7 @@ describe('Lobby', () => {
             isFullscreen={false}
             onActiveIndexChange={setActiveIndex}
             onLaunch={vi.fn()}
+            onRandom={vi.fn()}
             onToggleFullscreen={vi.fn()}
           />
         </>
@@ -115,6 +118,7 @@ describe('Lobby', () => {
         isFullscreen={false}
         onActiveIndexChange={vi.fn()}
         onLaunch={onLaunch}
+        onRandom={vi.fn()}
         onToggleFullscreen={vi.fn()}
       />,
     );
@@ -122,5 +126,21 @@ describe('Lobby', () => {
     await user.click(screen.getAllByRole('button', { name: 'Open Alpha Toy' })[0]);
 
     expect(onLaunch).toHaveBeenCalledWith(0);
+  });
+
+  it('renders a bottom random toy button', () => {
+    render(
+      <Lobby
+        experiences={createExperiences()}
+        activeIndex={0}
+        isFullscreen={false}
+        onActiveIndexChange={vi.fn()}
+        onLaunch={vi.fn()}
+        onRandom={vi.fn()}
+        onToggleFullscreen={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Random toy' })).toBeInTheDocument();
   });
 });

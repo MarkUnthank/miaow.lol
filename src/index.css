@@ -229,6 +229,10 @@ button {
   background: color-mix(in srgb, var(--theme-accent) 22%, white);
 }
 
+.action-button--random {
+  background: color-mix(in srgb, var(--theme-accent-alt) 16%, white);
+}
+
 .action-button__icon,
 .carousel-arrow__icon,
 .overlay-button__icon {
@@ -1572,6 +1576,14 @@ button {
   top: max(env(safe-area-inset-top), clamp(1.1rem, 2vw, 2rem));
   right: max(env(safe-area-inset-right), clamp(1.1rem, 2vw, 2rem));
   z-index: 4;
+}
+
+.random-dock {
+  position: absolute;
+  left: 50%;
+  bottom: max(env(safe-area-inset-bottom), clamp(1rem, 2vw, 1.85rem));
+  z-index: 4;
+  transform: translateX(-50%);
 }
 
 .share-dock {
