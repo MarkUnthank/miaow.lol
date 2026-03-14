@@ -2,8 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildShareLinks, buildSharePayload, shouldUseNativeShare } from '../share';
 import { ShareIcon } from './Icons';
 
-const NUDGE_MIN_DELAY = 20_000;
-const NUDGE_DELAY_RANGE = 10_000;
+const NUDGE_DELAY = 15_000;
 const NUDGE_DURATION = 1_150;
 
 async function copyText(text) {
@@ -63,7 +62,7 @@ export function ShareDock({ experience }) {
           setIsNudging(false);
           scheduleNudge();
         }, NUDGE_DURATION);
-      }, NUDGE_MIN_DELAY + Math.random() * NUDGE_DELAY_RANGE);
+      }, NUDGE_DELAY);
     }
 
     scheduleNudge();
