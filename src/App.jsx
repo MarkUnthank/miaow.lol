@@ -1,8 +1,10 @@
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { Lobby } from './components/Lobby';
 import { Player } from './components/Player';
+import { ShareDock } from './components/ShareDock';
 import { experiences, getRandomExperienceIndex, getWrappedIndex } from './data/experiences';
 import { APP_API_NAME } from './appApi';
+import { buildExperienceUrl, buildHistoryPath, buildHomeUrl, getExperienceIndexFromLocation } from './share';
 
 const APP_HISTORY_MARKER = '__miaow';
 
@@ -39,19 +41,52 @@ function getInitialAppState() {
     return {
       activeIndex: 0,
       currentIndex: 0,
+      hasRootHistory: true,
       mode: 'lobby',
       step: 0,
     };
   }
 
-  return (
-    normalizeAppHistoryState(window.history.state) ?? {
-      activeIndex: 0,
-      currentIndex: 0,
-      mode: 'lobby',
+  const historyState = normalizeAppHistoryState(window.history.state);
+
+  if (historyState) {
+    return {
+      ...historyState,
+      hasRootHistory: historyState.mode === 'lobby' || historyState.step > 0,
+    };
+  }
+
+  const sharedExperienceIndex = getExperienceIndexFromLocation(experiences, window.location);
+
+  if (sharedExperienceIndex >= 0) {
+    return {
+      activeIndex: sharedExperienceIndex,
+      currentIndex: sharedExperienceIndex,
+      hasRootHistory: false,
+      mode: 'player',
       step: 0,
-    }
-  );
+    };
+  }
+
+  return {
+    activeIndex: 0,
+    currentIndex: 0,
+    hasRootHistory: true,
+    mode: 'lobby',
+    step: 0,
+  };
+}
+
+function buildAppUrl(nextState) {
+  if (typeof window === 'undefined') {
+    return '/';
+  }
+
+  if (nextState.mode === 'player') {
+    return buildHistoryPath(buildExperienceUrl(experiences[nextState.currentIndex]?.id, window.location));
+  }
+
+  return buildHistoryPath(buildHomeUrl(window.location));
 }
 
 function toThemeStyle(theme) {
@@ -73,10 +108,11 @@ function toThemeStyle(theme) {
 export default function App() {
   const appRef = useRef(null);
   const historyReadyRef = useRef(false);
+  const initialAppState = useMemo(() => getInitialAppState(), []);
+  const hasRootHistoryRef = useRef(initialAppState.hasRootHistory);
   const requestFullscreenRef = useRef(() => Promise.resolve(undefined));
   const exitFullscreenRef = useRef(() => Promise.resolve(undefined));
   const toggleFullscreenRef = useRef(() => Promise.resolve(undefined));
-  const initialAppState = useMemo(() => getInitialAppState(), []);
   const historyStepRef = useRef(initialAppState.step);
   const [mode, setMode] = useState(initialAppState.mode);
   const [activeIndex, setActiveIndex] = useState(initialAppState.activeIndex);
@@ -104,11 +140,16 @@ export default function App() {
     }
 
     const method = historyMode === 'replace' ? 'replaceState' : 'pushState';
-    window.history[method](buildAppHistoryState(nextState), '', window.location.href);
+    window.history[method](buildAppHistoryState(nextState), '', buildAppUrl(nextState));
   }
 
   function navigateToState(nextState, historyMode = 'push') {
     experiences[nextState.currentIndex].preload();
+
+    if (nextState.mode === 'lobby') {
+      hasRootHistoryRef.current = true;
+    }
+
     writeHistoryState(nextState, historyMode);
     applyAppState(nextState);
   }
@@ -134,7 +175,7 @@ export default function App() {
       step: initialAppState.step,
     };
 
-    window.history.replaceState(buildAppHistoryState(initialHistoryState), '', window.location.href);
+    window.history.replaceState(buildAppHistoryState(initialHistoryState), '', buildAppUrl(initialHistoryState));
     historyReadyRef.current = true;
 
     const handlePopState = (event) => {
@@ -142,6 +183,10 @@ export default function App() {
 
       if (!nextState) {
         return;
+      }
+
+      if (nextState.mode === 'lobby') {
+        hasRootHistoryRef.current = true;
       }
 
       applyAppState(nextState);
@@ -188,7 +233,7 @@ export default function App() {
       return;
     }
 
-    window.history.replaceState(buildAppHistoryState(nextState), '', window.location.href);
+    window.history.replaceState(buildAppHistoryState(nextState), '', buildAppUrl(nextState));
   }, [activeIndex, currentIndex, mode]);
 
   async function requestFullscreen() {
@@ -229,7 +274,7 @@ export default function App() {
   }
 
   function goBackToLobby() {
-    if (historyReadyRef.current && historyStepRef.current > 0) {
+    if (historyReadyRef.current && hasRootHistoryRef.current && historyStepRef.current > 0) {
       window.history.go(-historyStepRef.current);
       return;
     }
@@ -335,6 +380,8 @@ export default function App() {
           />
         </section>
       ) : null}
+
+      <ShareDock experience={themedExperience} />
     </main>
   );
 }

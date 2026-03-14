@@ -47,9 +47,9 @@ describe('Lobby', () => {
       />,
     );
 
-    expect(screen.getAllByText('Alpha Toy')).toHaveLength(LOOP_COPY_COUNT);
-    expect(screen.getAllByText('Beta Toy')).toHaveLength(LOOP_COPY_COUNT);
-    expect(screen.getAllByText('Gamma Toy')).toHaveLength(LOOP_COPY_COUNT);
+    expect(screen.getAllByRole('button', { name: 'Alpha Toy' })).toHaveLength(LOOP_COPY_COUNT);
+    expect(screen.getAllByRole('button', { name: 'Beta Toy' })).toHaveLength(LOOP_COPY_COUNT);
+    expect(screen.getAllByRole('button', { name: 'Gamma Toy' })).toHaveLength(LOOP_COPY_COUNT);
   });
 
   it('wraps from the last experience back to the first when advancing', async () => {

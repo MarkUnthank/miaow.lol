@@ -67,3 +67,15 @@ export function ExpandIcon({ className }) {
     </IconBase>
   );
 }
+
+export function ShareIcon({ className }) {
+  return (
+    <IconBase className={className}>
+      <path d="M15 8a3 3 0 1 0-.01-6.01A3 3 0 0 0 15 8Z" />
+      <path d="M6 15a3 3 0 1 0-.01-6.01A3 3 0 0 0 6 15Z" />
+      <path d="M15 22a3 3 0 1 0-.01-6.01A3 3 0 0 0 15 22Z" />
+      <path d="m8.6 10.8 3.8-2.6" />
+      <path d="m8.6 13.2 3.8 2.6" />
+    </IconBase>
+  );
+}

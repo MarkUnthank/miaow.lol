@@ -1495,6 +1495,138 @@ button {
   z-index: 4;
 }
 
+.share-dock {
+  position: absolute;
+  right: max(env(safe-area-inset-right), clamp(1rem, 2vw, 1.85rem));
+  bottom: max(env(safe-area-inset-bottom), clamp(1rem, 2vw, 1.85rem));
+  z-index: 5;
+  display: grid;
+  justify-items: end;
+  gap: 0.85rem;
+}
+
+.share-dock__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 3.55rem;
+  padding: 0.9rem 1.35rem;
+  border: 3px solid #121212;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111111;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.8),
+    0 12px 0 rgba(17, 17, 17, 0.16);
+  transition:
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: center center;
+}
+
+.share-dock__button:hover,
+.share-dock__button:focus-visible {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.8),
+    0 15px 0 rgba(17, 17, 17, 0.16);
+}
+
+.share-dock__button:active {
+  transform: translateY(1px) scale(0.985);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.8),
+    0 8px 0 rgba(17, 17, 17, 0.16);
+}
+
+.share-dock__button.is-nudging {
+  animation: share-dock-attention 1.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.share-dock__icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
+}
+
+.share-dock__menu {
+  width: min(22rem, calc(100vw - 2rem));
+  padding: 1rem;
+  border: 3px solid #121212;
+  border-radius: 1.4rem;
+  background: rgba(255, 255, 255, 0.98);
+  color: #111111;
+  box-shadow:
+    0 26px 60px rgba(17, 17, 17, 0.18),
+    0 10px 0 rgba(17, 17, 17, 0.12);
+  backdrop-filter: blur(12px);
+  animation: share-dock-menu-enter 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.share-dock__menu-header {
+  display: grid;
+  gap: 0.28rem;
+  margin-bottom: 0.85rem;
+}
+
+.share-dock__eyebrow {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.share-dock__title {
+  margin: 0;
+  font-family: var(--brand-display-font);
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  line-height: 0.96;
+}
+
+.share-dock__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.share-dock__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.95rem;
+  padding: 0.8rem 0.9rem;
+  border: 2px solid #111111;
+  border-radius: 0.95rem;
+  background: #ffffff;
+  color: #111111;
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+  transition:
+    transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
+    background 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.share-dock__item:hover,
+.share-dock__item:focus-visible {
+  transform: translateY(-1px);
+  background: #f3f3f3;
+}
+
+.share-dock__item:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.share-dock__status {
+  margin: 0.8rem 0 0;
+  min-height: 1.4rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
 .player-screen {
   position: relative;
   height: 100dvh;
@@ -1580,6 +1712,39 @@ button {
   position: absolute;
   left: clamp(1rem, 2vw, 1.5rem);
   bottom: clamp(1rem, 2vw, 1.5rem);
+}
+
+@keyframes share-dock-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.7rem) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes share-dock-attention {
+  0%,
+  100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  16% {
+    transform: translateY(-4px) scale(1.06) rotate(-4deg);
+  }
+  32% {
+    transform: translateY(-7px) scale(1.12) rotate(4deg);
+  }
+  48% {
+    transform: translateY(-6px) scale(1.1) rotate(-5deg);
+  }
+  64% {
+    transform: translateY(-4px) scale(1.07) rotate(4deg);
+  }
+  80% {
+    transform: translateY(-1px) scale(1.02) rotate(-2deg);
+  }
 }
 
 @keyframes blob-drift-a {
@@ -1973,6 +2138,14 @@ button {
 
   .player-overlay__actions {
     justify-content: flex-start;
+  }
+
+  .share-dock__menu {
+    width: min(20rem, calc(100vw - 1.5rem));
+  }
+
+  .share-dock__grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

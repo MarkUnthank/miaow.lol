@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { APP_API_NAME } from './appApi';
@@ -87,6 +87,8 @@ describe('App', () => {
   let fullscreenElement;
   let requestFullscreenMock;
   let exitFullscreenMock;
+  let shareMock;
+  let clipboardWriteTextMock;
 
   beforeEach(() => {
     fullscreenElement = null;
@@ -113,6 +115,34 @@ describe('App', () => {
       value: requestFullscreenMock,
       writable: true,
     });
+    shareMock = vi.fn().mockResolvedValue(undefined);
+    clipboardWriteTextMock = vi.fn().mockResolvedValue(undefined);
+
+    Object.defineProperty(navigator, 'share', {
+      configurable: true,
+      value: shareMock,
+      writable: true,
+    });
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: clipboardWriteTextMock },
+      writable: true,
+    });
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 0,
+      writable: true,
+    });
+    window.matchMedia.mockImplementation((query) => ({
+      addEventListener: vi.fn(),
+      addListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      matches: false,
+      media: query,
+      onchange: null,
+      removeEventListener: vi.fn(),
+      removeListener: vi.fn(),
+    }));
 
     window.history.replaceState(null, '', '/');
     delete window[APP_API_NAME];
@@ -213,5 +243,58 @@ describe('App', () => {
     expect(historyGoSpy).toHaveBeenCalledWith(-2);
     expect(screen.getByTestId('lobby')).toBeInTheDocument();
     expect(screen.getByTestId('lobby-active-index')).toHaveTextContent('0');
+  });
+
+  it('opens a multi-option share menu on desktop and can copy the exact toy link', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const expectedUrl = `${window.location.origin}/?experience=experience-0`;
+
+    await user.click(screen.getByRole('button', { name: 'Share' }));
+
+    expect(screen.getByRole('dialog', { name: 'Share options' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy link' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'WhatsApp' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Telegram' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Email' })).toHaveAttribute('href', expect.stringContaining(encodeURIComponent(expectedUrl)));
+
+    await user.click(screen.getByRole('button', { name: 'Copy link' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent('Link copied.');
+    });
+  });
+
+  it('uses the native share sheet on mobile-like devices', async () => {
+    const user = userEvent.setup();
+    const expectedUrl = `${window.location.origin}/?experience=experience-1`;
+
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 5,
+      writable: true,
+    });
+
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'launch-second' }));
+    await user.click(screen.getByRole('button', { name: 'Share' }));
+
+    expect(shareMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: 'Box Fort description',
+        title: 'Box Fort | miaow.lol',
+        url: expectedUrl,
+      }),
+    );
+    expect(screen.queryByRole('dialog', { name: 'Share options' })).not.toBeInTheDocument();
+  });
+
+  it('opens a shared experience directly from the query string', () => {
+    window.history.replaceState(null, '', '/?experience=experience-1');
+
+    render(<App />);
+
+    expect(screen.getByTestId('player-title')).toHaveTextContent('Box Fort');
+    expect(window.history.state).toMatchObject({ mode: 'player', currentIndex: 1, step: 0 });
   });
 });
