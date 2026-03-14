@@ -257,6 +257,7 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
 
               return (
                 <button
+                  aria-label={experience.title}
                   aria-pressed={isActive}
                   className={`toy-card ${isActive ? 'is-active' : ''}`.trim()}
                   key={`${experience.id}-${copyIndex}`}
@@ -290,11 +291,6 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
 
                   <div className="toy-card__preview">
                     <PreviewArt experience={experience} isActive={isActive} />
-                  </div>
-
-                  <div className="toy-card__meta">
-                    <h3 className="toy-card__title">{experience.title}</h3>
-                    <p className="toy-card__description">{experience.cardSummary}</p>
                   </div>
                 </button>
               );

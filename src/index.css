@@ -167,7 +167,6 @@ button {
   line-height: 0.95;
 }
 
-.toy-card__description,
 .player-loading__copy {
   margin: 0;
   line-height: 1.6;
@@ -395,21 +394,7 @@ button {
 }
 
 .toy-card__preview {
-  padding-inline: 1rem;
-}
-
-.toy-card__meta {
-  display: grid;
-  gap: 0.35rem;
-  padding: 1rem 1.15rem 1.2rem;
-}
-
-.toy-card__title {
-  margin: 0;
-  font-family: var(--brand-display-font);
-  font-size: clamp(1.45rem, 2vw, 1.9rem);
-  letter-spacing: -0.04em;
-  line-height: 0.96;
+  padding: 0 1rem 1rem;
 }
 
 .preview-art {
