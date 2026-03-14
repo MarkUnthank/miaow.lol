@@ -1,5 +1,7 @@
 :root {
   color-scheme: light;
+  --brand-display-font: "Titan One", cursive;
+  --brand-body-font: "Space Grotesk", sans-serif;
   --theme-bg: #efe6dc;
   --theme-panel: #fff6ee;
   --theme-ink: #201816;
@@ -31,7 +33,7 @@ body {
   overflow: hidden;
   background: var(--theme-bg);
   color: var(--theme-ink);
-  font-family: var(--theme-body-font);
+  font-family: var(--brand-body-font);
 }
 
 body,
@@ -50,6 +52,7 @@ button {
   position: relative;
   min-height: 100dvh;
   overflow: hidden;
+  font-family: var(--brand-body-font);
   background:
     radial-gradient(circle at 12% 12%, rgba(255, 255, 255, 0.82), transparent 28%),
     radial-gradient(circle at 88% 20%, rgba(255, 255, 255, 0.48), transparent 24%),
@@ -169,7 +172,7 @@ button {
 
 .lobby-copy__title {
   margin: 0;
-  font-family: var(--theme-display-font);
+  font-family: var(--brand-display-font);
   font-size: clamp(3.75rem, 8vw, 6.4rem);
   letter-spacing: -0.06em;
   line-height: 0.9;
@@ -208,7 +211,7 @@ button {
 .player-overlay__title,
 .player-loading__title {
   margin: 0;
-  font-family: var(--theme-display-font);
+  font-family: var(--brand-display-font);
   font-size: clamp(1.6rem, 2.6vw, 2.4rem);
   letter-spacing: -0.04em;
   line-height: 0.95;
@@ -509,7 +512,7 @@ button {
 
 .toy-card__title {
   margin: 0;
-  font-family: var(--theme-display-font);
+  font-family: var(--brand-display-font);
   font-size: clamp(1.45rem, 2vw, 1.9rem);
   letter-spacing: -0.04em;
   line-height: 0.96;
