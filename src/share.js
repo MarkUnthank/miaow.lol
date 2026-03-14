@@ -1,21 +1,4 @@
-const EXPERIENCE_QUERY_PARAM = 'experience';
-const FALLBACK_ORIGIN = 'https://miaow.lol';
-
-function resolveUrl(locationLike) {
-  if (locationLike instanceof URL) {
-    return new URL(locationLike.toString());
-  }
-
-  if (typeof locationLike === 'string') {
-    return new URL(locationLike, FALLBACK_ORIGIN);
-  }
-
-  if (locationLike?.href) {
-    return new URL(locationLike.href, FALLBACK_ORIGIN);
-  }
-
-  return new URL(FALLBACK_ORIGIN);
-}
+import { EXPERIENCE_QUERY_PARAM, resolveUrl } from './siteConfig';
 
 export function buildHomeUrl(locationLike) {
   const url = resolveUrl(locationLike);

@@ -1,37 +1,5 @@
-import { buildExperienceUrl, buildHomeUrl } from './share';
-
-export const SEO_DEFAULTS = {
-  description:
-    'Play 15 open-source cat-themed browser toys and interactive mini experiences built for the web. miaow.lol is a Really Nice project.',
-  title: 'miaow.lol | Open-source cat browser toys by Really Nice',
-};
-
-function cleanText(value) {
-  return String(value ?? '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function trimToLength(value, maxLength = 160) {
-  if (value.length <= maxLength) {
-    return value;
-  }
-
-  const slice = value.slice(0, maxLength - 3);
-  const trimmed = slice.replace(/[,:; ]+\S*$/, '').trimEnd();
-  return `${trimmed || slice}...`;
-}
-
-function buildExperienceDescription(experience) {
-  const summary = cleanText(experience?.description);
-
-  if (!summary) {
-    return SEO_DEFAULTS.description;
-  }
-
-  const punctuation = /[.!?]$/.test(summary) ? '' : '.';
-  return trimToLength(`${summary}${punctuation} Part of miaow.lol, an open-source project by Really Nice.`);
-}
+export { SEO_DEFAULTS, buildSeoMetadata } from './siteMetadata';
+import { buildStructuredData } from './siteMetadata';
 
 function ensureHeadElement(selector, createElement) {
   let element = document.head.querySelector(selector);
@@ -74,20 +42,15 @@ function setCanonicalUrl(url) {
   element.setAttribute('href', url);
 }
 
-export function buildSeoMetadata(experience, locationLike) {
-  if (!experience) {
-    return {
-      description: SEO_DEFAULTS.description,
-      title: SEO_DEFAULTS.title,
-      url: buildHomeUrl(locationLike),
-    };
-  }
+function setStructuredData(structuredData) {
+  const element = ensureHeadElement('script#miaow-structured-data', () => {
+    const script = document.createElement('script');
+    script.setAttribute('id', 'miaow-structured-data');
+    script.setAttribute('type', 'application/ld+json');
+    return script;
+  });
 
-  return {
-    description: buildExperienceDescription(experience),
-    title: `${cleanText(experience.title) || 'miaow.lol'} | miaow.lol`,
-    url: buildExperienceUrl(experience.id, locationLike),
-  };
+  element.textContent = JSON.stringify(structuredData ?? buildStructuredData(null, window.location));
 }
 
 export function applySeoMetadata(metadata) {
@@ -106,4 +69,5 @@ export function applySeoMetadata(metadata) {
   setMetaByProperty('og:title', metadata.title);
   setMetaByProperty('og:description', metadata.description);
   setMetaByProperty('og:url', metadata.url);
+  setStructuredData(metadata.structuredData);
 }

@@ -1,0 +1,2 @@
+# Optional: pin canonical/share URLs when running the Worker locally or on preview hostnames.
+PUBLIC_SITE_ORIGIN=https://miaow.lol
