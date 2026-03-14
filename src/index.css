@@ -1490,8 +1490,8 @@ button {
 
 .fullscreen-dock {
   position: absolute;
-  left: clamp(1.1rem, 2vw, 2rem);
-  bottom: clamp(1.1rem, 2vw, 2rem);
+  top: max(env(safe-area-inset-top), clamp(1.1rem, 2vw, 2rem));
+  right: max(env(safe-area-inset-right), clamp(1.1rem, 2vw, 2rem));
   z-index: 4;
 }
 
