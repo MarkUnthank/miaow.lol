@@ -3,20 +3,11 @@ import { ArrowLeftIcon, ArrowRightIcon, ExpandIcon } from './Icons';
 import { PreviewArt } from './PreviewArt';
 import { getWrappedIndex } from '../data/experiences';
 
-const BANDIT_SPIN_DURATION_MS = 760;
-const BANDIT_REVEAL_DELAY_MS = 240;
-
 export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexChange, onLaunch, onToggleFullscreen }) {
   const trackRef = useRef(null);
   const cardRefs = useRef([]);
   const scrollFrameRef = useRef(0);
-  const spinFrameRef = useRef(0);
-  const spinTimeoutRef = useRef(0);
-  const revealStartTimeoutRef = useRef(0);
-  const revealClearTimeoutRef = useRef(0);
   const [trackEdgePadding, setTrackEdgePadding] = useState(20);
-  const [isBanditSpinning, setIsBanditSpinning] = useState(false);
-  const [revealingIndex, setRevealingIndex] = useState(-1);
 
   function scrollCardIntoView(index, behavior = 'smooth') {
     const track = trackRef.current;
@@ -46,45 +37,12 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
     setTrackEdgePadding(nextPadding);
   }
 
-  function clearRailFxTimers() {
-    if (spinFrameRef.current) {
-      cancelAnimationFrame(spinFrameRef.current);
-      spinFrameRef.current = 0;
-    }
-
-    window.clearTimeout(spinTimeoutRef.current);
-    window.clearTimeout(revealStartTimeoutRef.current);
-    window.clearTimeout(revealClearTimeoutRef.current);
-  }
-
-  function triggerRailFx(nextIndex) {
-    clearRailFxTimers();
-    setIsBanditSpinning(false);
-    setRevealingIndex(-1);
-
-    spinFrameRef.current = requestAnimationFrame(() => {
-      setIsBanditSpinning(true);
-
-      revealStartTimeoutRef.current = window.setTimeout(() => {
-        setRevealingIndex(nextIndex);
-      }, BANDIT_REVEAL_DELAY_MS);
-
-      spinTimeoutRef.current = window.setTimeout(() => {
-        setIsBanditSpinning(false);
-      }, BANDIT_SPIN_DURATION_MS);
-
-      revealClearTimeoutRef.current = window.setTimeout(() => {
-        setRevealingIndex(-1);
-      }, BANDIT_SPIN_DURATION_MS + 140);
-    });
-  }
-
-  function activateCard(index, { shouldCenter = true, withFx = true } = {}) {
+  function activateCard(index, { shouldCenter = true, behavior = 'smooth' } = {}) {
     const nextIndex = getWrappedIndex(index);
 
     if (nextIndex === activeIndex) {
       if (shouldCenter) {
-        scrollCardIntoView(nextIndex, withFx ? 'auto' : 'smooth');
+        scrollCardIntoView(nextIndex, behavior);
       }
       return;
     }
@@ -92,28 +50,16 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
     experiences[nextIndex].preload();
     onActiveIndexChange(nextIndex);
 
-    if (withFx) {
-      triggerRailFx(nextIndex);
-    }
-
     if (shouldCenter) {
-      scrollCardIntoView(nextIndex, withFx ? 'auto' : 'smooth');
+      scrollCardIntoView(nextIndex, behavior);
     }
   }
 
   function moveSelection(delta) {
-    if (isBanditSpinning) {
-      return;
-    }
-
     activateCard(activeIndex + delta);
   }
 
   function handleScroll() {
-    if (isBanditSpinning) {
-      return;
-    }
-
     if (scrollFrameRef.current) {
       cancelAnimationFrame(scrollFrameRef.current);
     }
@@ -165,8 +111,6 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
       if (scrollFrameRef.current) {
         cancelAnimationFrame(scrollFrameRef.current);
       }
-
-      clearRailFxTimers();
       resizeObserver.disconnect();
     };
   }, []);
@@ -174,10 +118,6 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.defaultPrevented || event.altKey || event.metaKey || event.ctrlKey) {
-        return;
-      }
-
-      if (isBanditSpinning) {
         return;
       }
 
@@ -202,12 +142,12 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [activeIndex, isBanditSpinning, onLaunch]);
+  }, [activeIndex, onLaunch]);
 
   return (
     <div className="lobby-screen">
       <div className="carousel-panel" style={{ '--track-edge-padding': `${trackEdgePadding}px` }}>
-        <div className={`carousel-shell ${isBanditSpinning ? 'is-bandit-spinning' : ''}`.trim()}>
+        <div className="carousel-shell">
           <button aria-label="Previous toy" className="carousel-arrow carousel-arrow--left" onClick={() => moveSelection(-1)} type="button">
             <ArrowLeftIcon className="carousel-arrow__icon" />
           </button>
@@ -219,7 +159,7 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
               return (
                 <button
                   aria-pressed={isActive}
-                  className={`toy-card ${isActive ? 'is-active' : ''} ${isActive && revealingIndex === index ? 'is-revealing' : ''}`.trim()}
+                  className={`toy-card ${isActive ? 'is-active' : ''}`.trim()}
                   key={experience.id}
                   onClick={() => {
                     if (isActive) {
@@ -234,7 +174,7 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
                       return;
                     }
 
-                    activateCard(index, { shouldCenter: true, withFx: true });
+                    activateCard(index);
                   }}
                   onMouseEnter={() => experiences[index].preload()}
                   ref={(node) => {

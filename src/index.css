@@ -272,13 +272,8 @@ button {
   mix-blend-mode: screen;
   opacity: 0;
   pointer-events: none;
-  filter: blur(16px);
   background-position: 0 0, 0 0;
   transform: none;
-}
-
-.carousel-shell.is-bandit-spinning::after {
-  animation: rail-bandit-flash 760ms cubic-bezier(0.18, 0.9, 0.22, 1) both;
 }
 
 .carousel-track {
@@ -287,23 +282,20 @@ button {
   min-width: 0;
   gap: clamp(1rem, 1.8vw, 1.4rem);
   overflow-x: auto;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: x proximity;
   scroll-padding-inline: var(--track-edge-padding, 1.25rem);
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
   padding:
     1rem
     var(--track-edge-padding, 1.25rem)
     2.3rem;
   scrollbar-width: none;
-  will-change: transform, filter, opacity;
 }
 
 .carousel-track::-webkit-scrollbar {
   display: none;
-}
-
-.carousel-shell.is-bandit-spinning .carousel-track {
-  pointer-events: none;
-  animation: rail-bandit-spin 760ms cubic-bezier(0.18, 0.9, 0.22, 1) both;
 }
 
 .carousel-arrow {
@@ -391,14 +383,12 @@ button {
 
 .toy-card__preview {
   padding-inline: 1rem;
-  will-change: transform, filter, opacity;
 }
 
 .toy-card__meta {
   display: grid;
   gap: 0.35rem;
   padding: 1rem 1.15rem 1.2rem;
-  will-change: transform, filter, opacity;
 }
 
 .toy-card__title {
@@ -407,19 +397,6 @@ button {
   font-size: clamp(1.45rem, 2vw, 1.9rem);
   letter-spacing: -0.04em;
   line-height: 0.96;
-}
-
-.toy-card__chrome {
-  will-change: transform, filter, opacity;
-}
-
-.toy-card.is-revealing .toy-card__preview {
-  animation: rail-focus-preview-reveal 560ms cubic-bezier(0.12, 0.9, 0.2, 1) both;
-}
-
-.toy-card.is-revealing .toy-card__chrome,
-.toy-card.is-revealing .toy-card__meta {
-  animation: rail-focus-copy-reveal 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .preview-art {
@@ -1949,85 +1926,6 @@ button {
   }
 }
 
-@keyframes rail-bandit-spin {
-  0% {
-    transform: none;
-    filter: blur(0) saturate(1) brightness(1);
-    opacity: 1;
-  }
-  18% {
-    transform: none;
-    filter: blur(8px) saturate(1.05) brightness(1.02);
-    opacity: 0.94;
-  }
-  44% {
-    transform: none;
-    filter: blur(22px) saturate(1.16) brightness(1.04);
-    opacity: 0.7;
-  }
-  72% {
-    transform: none;
-    filter: blur(10px) saturate(1.08) brightness(1.02);
-    opacity: 0.88;
-  }
-  100% {
-    transform: none;
-    filter: blur(0) saturate(1) brightness(1);
-    opacity: 1;
-  }
-}
-
-@keyframes rail-bandit-flash {
-  0%,
-  100% {
-    opacity: 0;
-    background-position: 0 0, 0 -2rem;
-    transform: none;
-  }
-  22% {
-    opacity: 0.3;
-  }
-  48% {
-    opacity: 0.72;
-    background-position: 0 0, 0 6rem;
-    transform: none;
-  }
-  82% {
-    opacity: 0.22;
-    background-position: 0 0, 0 10rem;
-  }
-}
-
-@keyframes rail-focus-preview-reveal {
-  0% {
-    opacity: 0.38;
-    filter: blur(18px) saturate(1.22);
-    transform: translateY(0.9rem) scale(1.04);
-  }
-  58% {
-    opacity: 0.94;
-    filter: blur(7px) saturate(1.06);
-  }
-  100% {
-    opacity: 1;
-    filter: blur(0) saturate(1);
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes rail-focus-copy-reveal {
-  0% {
-    opacity: 0;
-    filter: blur(12px);
-    transform: translateY(0.7rem);
-  }
-  100% {
-    opacity: 1;
-    filter: blur(0);
-    transform: translateY(0);
-  }
-}
-
 @keyframes player-enter {
   from {
     opacity: 0;
@@ -2075,11 +1973,7 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .carousel-shell.is-bandit-spinning::after,
-  .carousel-shell.is-bandit-spinning .carousel-track,
-  .toy-card.is-revealing .toy-card__preview,
-  .toy-card.is-revealing .toy-card__chrome,
-  .toy-card.is-revealing .toy-card__meta {
-    animation: none;
+  .carousel-track {
+    scroll-behavior: auto;
   }
 }
