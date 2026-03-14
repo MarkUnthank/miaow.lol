@@ -7,9 +7,51 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
   const trackRef = useRef(null);
   const cardRefs = useRef([]);
   const scrollFrameRef = useRef(0);
+  const scrollSyncIgnoreUntilRef = useRef(0);
+  const scrollSyncResetFrameRef = useRef(0);
+  const scrollSyncResetTimerRef = useRef(0);
   const activeVirtualIndexRef = useRef(getCenteredLoopIndex(experiences.length, activeIndex));
   const [trackEdgePadding, setTrackEdgePadding] = useState(20);
   const [activeVirtualIndex, setActiveVirtualIndex] = useState(() => getCenteredLoopIndex(experiences.length, activeIndex));
+
+  function clearScrollSyncIgnore() {
+    if (scrollSyncResetFrameRef.current) {
+      cancelAnimationFrame(scrollSyncResetFrameRef.current);
+      scrollSyncResetFrameRef.current = 0;
+    }
+
+    if (scrollSyncResetTimerRef.current) {
+      window.clearTimeout(scrollSyncResetTimerRef.current);
+      scrollSyncResetTimerRef.current = 0;
+    }
+
+    scrollSyncIgnoreUntilRef.current = 0;
+  }
+
+  function suppressScrollSync(behavior = 'auto') {
+    clearScrollSyncIgnore();
+
+    if (behavior === 'smooth') {
+      scrollSyncIgnoreUntilRef.current = Date.now() + 450;
+      scrollSyncResetTimerRef.current = window.setTimeout(() => {
+        scrollSyncIgnoreUntilRef.current = 0;
+        scrollSyncResetTimerRef.current = 0;
+      }, 450);
+      return;
+    }
+
+    scrollSyncIgnoreUntilRef.current = Date.now() + 34;
+    scrollSyncResetFrameRef.current = requestAnimationFrame(() => {
+      scrollSyncResetFrameRef.current = requestAnimationFrame(() => {
+        scrollSyncIgnoreUntilRef.current = 0;
+        scrollSyncResetFrameRef.current = 0;
+      });
+    });
+  }
+
+  function shouldIgnoreScrollSync() {
+    return scrollSyncIgnoreUntilRef.current > Date.now();
+  }
 
   function wrapIndex(index) {
     if (experiences.length < 1) {
@@ -36,6 +78,8 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
     if (!track) {
       return;
     }
+
+    suppressScrollSync(behavior);
 
     if (behavior === 'auto' || behavior === 'instant') {
       track.scrollLeft = left;
@@ -164,7 +208,7 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
       return closestVirtualIndex;
     }
 
-    track.scrollLeft += loopSegmentWidth * copyShift;
+    setTrackScrollLeft(track, track.scrollLeft + loopSegmentWidth * copyShift, 'instant');
     return closestVirtualIndex + experiences.length * copyShift;
   }
 
@@ -175,7 +219,7 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
 
     scrollFrameRef.current = requestAnimationFrame(() => {
       const track = trackRef.current;
-      if (!track) {
+      if (!track || shouldIgnoreScrollSync()) {
         return;
       }
 
@@ -213,6 +257,7 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
       if (scrollFrameRef.current) {
         cancelAnimationFrame(scrollFrameRef.current);
       }
+      clearScrollSyncIgnore();
       resizeObserver.disconnect();
     };
   }, []);

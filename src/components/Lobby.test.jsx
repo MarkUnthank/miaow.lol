@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { Lobby } from './Lobby';
@@ -57,6 +57,32 @@ describe('Lobby', () => {
     );
 
     expect(scrollToSpy).not.toHaveBeenCalled();
+  });
+
+  it('ignores mount-time scroll events while the rail is centering itself', () => {
+    vi.useFakeTimers();
+
+    try {
+      const onActiveIndexChange = vi.fn();
+      const { container } = render(
+        <Lobby
+          experiences={createExperiences()}
+          activeIndex={1}
+          isFullscreen={false}
+          onActiveIndexChange={onActiveIndexChange}
+          onLaunch={vi.fn()}
+          onRandom={vi.fn()}
+          onToggleFullscreen={vi.fn()}
+        />,
+      );
+
+      fireEvent.scroll(container.querySelector('.carousel-track'));
+      vi.runAllTimers();
+
+      expect(onActiveIndexChange).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('renders repeated experience copies for a continuous rail', () => {
