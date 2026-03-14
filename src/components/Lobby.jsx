@@ -274,6 +274,14 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
   }, [activeIndex, experiences.length]);
 
   useEffect(() => {
+    if (!trackRef.current) {
+      return;
+    }
+
+    scrollCardIntoView(activeVirtualIndexRef.current, 'auto');
+  }, [trackEdgePadding]);
+
+  useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.defaultPrevented || event.altKey || event.metaKey || event.ctrlKey) {
         return;
