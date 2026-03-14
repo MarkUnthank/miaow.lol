@@ -4,3 +4,8 @@ dist
 .playwright-cli
 .vscode/
 .codex/
+.wrangler/
+.dev.vars
+.env
+.env.local
+.env.*.local
