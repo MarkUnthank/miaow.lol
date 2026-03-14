@@ -159,6 +159,12 @@ describe('App', () => {
     }));
 
     window.history.replaceState(null, '', '/');
+    document.title = '';
+    document
+      .querySelectorAll(
+        'meta[name="description"], meta[name="twitter:card"], meta[name="twitter:title"], meta[name="twitter:description"], meta[property="og:type"], meta[property="og:site_name"], meta[property="og:title"], meta[property="og:description"], meta[property="og:url"], link[rel="canonical"]',
+      )
+      .forEach((node) => node.remove());
     delete window[APP_API_NAME];
     appTestMocks.getRandomExperienceNavigation.mockReset().mockReturnValue({ nextIndex: 2, seenIndices: [2] });
     appTestMocks.experiences.forEach((experience) => {
@@ -212,6 +218,32 @@ describe('App', () => {
 
     expect(window[APP_API_NAME].audio.isMuted()).toBe(false);
     expect(screen.getByTestId('player-muted')).toHaveTextContent('false');
+  });
+
+  it('updates page metadata for the home screen and active experience', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const homeUrl = `${window.location.origin}/`;
+    const experienceUrl = `${window.location.origin}/?experience=experience-1`;
+
+    expect(document.title).toBe('miaow.lol | Open-source cat browser toys by Really Nice');
+    expect(document.querySelector('meta[name="description"]')).toHaveAttribute(
+      'content',
+      'Play 15 open-source cat-themed browser toys and interactive mini experiences built for the web. miaow.lol is a Really Nice project.',
+    );
+    expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute('href', homeUrl);
+    expect(document.querySelector('meta[property="og:url"]')).toHaveAttribute('content', homeUrl);
+
+    await user.click(screen.getByRole('button', { name: 'launch-second' }));
+
+    expect(document.title).toBe('Box Fort | miaow.lol');
+    expect(document.querySelector('meta[name="description"]')).toHaveAttribute(
+      'content',
+      'Box Fort description. Part of miaow.lol, an open-source project by Really Nice.',
+    );
+    expect(document.querySelector('meta[property="og:title"]')).toHaveAttribute('content', 'Box Fort | miaow.lol');
+    expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute('href', experienceUrl);
+    expect(document.querySelector('meta[property="og:url"]')).toHaveAttribute('content', experienceUrl);
   });
 
   it('pushes in-app history and restores prior states from popstate', async () => {

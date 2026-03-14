@@ -132,4 +132,132 @@ describe('ExperienceDocument', () => {
       });
     }
   });
+
+  it('keeps audio contexts muted across user-triggered resume calls until the app unmutes', async () => {
+    const createdContexts = [];
+    const OriginalAudioContext = window.AudioContext;
+
+    class MockAudioContext {
+      constructor() {
+        this.state = 'running';
+        createdContexts.push(this);
+      }
+
+      resume() {
+        this.state = 'running';
+        return Promise.resolve();
+      }
+
+      suspend() {
+        this.state = 'suspended';
+        return Promise.resolve();
+      }
+
+      close() {
+        this.state = 'closed';
+        return Promise.resolve();
+      }
+    }
+
+    Object.defineProperty(window, 'AudioContext', {
+      configurable: true,
+      value: MockAudioContext,
+      writable: true,
+    });
+
+    const html = `
+      <div>audio context toy</div>
+      <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        window.addEventListener('mousedown', () => {
+          audioCtx.resume();
+        });
+      </script>
+    `;
+
+    try {
+      const { container, rerender } = render(<ExperienceDocument html={html} muted title="Muted audio context toy" />);
+      const runtimeRoot = container.querySelector('.experience-runtime');
+      const stage = runtimeRoot?.shadowRoot?.querySelector('.toy-body');
+
+      expect(stage).toBeTruthy();
+
+      await waitFor(() => {
+        expect(createdContexts).toHaveLength(1);
+        expect(createdContexts[0].state).toBe('suspended');
+      });
+
+      stage.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+
+      await waitFor(() => {
+        expect(createdContexts[0].state).toBe('suspended');
+      });
+
+      rerender(<ExperienceDocument html={html} muted={false} title="Muted audio context toy" />);
+
+      await waitFor(() => {
+        expect(createdContexts[0].state).toBe('running');
+      });
+    } finally {
+      Object.defineProperty(window, 'AudioContext', {
+        configurable: true,
+        value: OriginalAudioContext,
+        writable: true,
+      });
+    }
+  });
+
+  it('executes toys that redeclare AudioContext inside their runtime script', async () => {
+    const OriginalAudioContext = window.AudioContext;
+
+    Object.defineProperty(window, 'AudioContext', {
+      configurable: true,
+      value: class MockAudioContext {},
+      writable: true,
+    });
+
+    const html = `
+      <div id="canvas" data-mounted="false" data-responded="false"></div>
+      <script>
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        document.getElementById('canvas').dataset.mounted = String(typeof AudioContext === 'function');
+        window.addEventListener('mousedown', () => {
+          document.getElementById('canvas').dataset.responded = 'true';
+        });
+      </script>
+    `;
+
+    try {
+      const { container } = render(<ExperienceDocument html={html} title="AudioContext redeclare toy" />);
+      const runtimeRoot = container.querySelector('.experience-runtime');
+      const stage = runtimeRoot?.shadowRoot?.querySelector('.toy-body');
+      const canvas = runtimeRoot?.shadowRoot?.querySelector('#canvas');
+
+      expect(stage).toBeTruthy();
+      expect(canvas).toBeTruthy();
+
+      stage.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+
+      await waitFor(() => {
+        expect(canvas?.dataset.mounted).toBe('true');
+        expect(canvas?.dataset.responded).toBe('true');
+      });
+    } finally {
+      Object.defineProperty(window, 'AudioContext', {
+        configurable: true,
+        value: OriginalAudioContext,
+        writable: true,
+      });
+    }
+  });
 });

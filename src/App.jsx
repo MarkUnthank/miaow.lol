@@ -4,6 +4,7 @@ import { Player } from './components/Player';
 import { ShareDock } from './components/ShareDock';
 import { experiences, getRandomExperienceNavigation, getWrappedIndex, markExperienceSeen } from './data/experiences';
 import { APP_API_NAME } from './appApi';
+import { applySeoMetadata, buildSeoMetadata } from './seo';
 import { buildExperienceUrl, buildHistoryPath, buildHomeUrl, getExperienceIndexFromLocation } from './share';
 
 const APP_HISTORY_MARKER = '__miaow';
@@ -224,6 +225,10 @@ export default function App() {
   }, [currentIndex]);
 
   useEffect(() => {
+    applySeoMetadata(buildSeoMetadata(mode === 'player' ? experiences[currentIndex] : null, window.location));
+  }, [currentIndex, mode]);
+
+  useEffect(() => {
     if (!historyReadyRef.current || mode !== 'lobby') {
       return;
     }
@@ -391,8 +396,16 @@ export default function App() {
         <div className="ambient-grid" />
       </div>
 
-      <div className="app-wordmark" aria-label="miaow.lol">
-        miaow.lol
+      <div className="app-branding">
+        <div className="app-wordmark" aria-label="miaow.lol">
+          miaow.lol
+        </div>
+        <p className="app-credit">
+          An open-source project by{' '}
+          <a href="https://reallynice.company" rel="author noreferrer" target="_blank">
+            Really Nice
+          </a>
+        </p>
       </div>
 
       <section className={`screen-layer lobby-layer ${mode === 'lobby' ? 'is-active' : 'is-hidden'}`}>

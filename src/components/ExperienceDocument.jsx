@@ -14,8 +14,6 @@ const RUNTIME_SCRIPT_PARAMS = [
   'top',
   'parent',
   'Audio',
-  'AudioContext',
-  'webkitAudioContext',
   'addEventListener',
   'removeEventListener',
   'dispatchEvent',
@@ -176,6 +174,48 @@ function createTrackedConstructor(Ctor, instances, onCreate) {
       return instance;
     },
   });
+}
+
+function guardAudioContextInstance(audioContext, mutedAudioContexts, effectiveMutedRef) {
+  if (!audioContext || typeof audioContext !== 'object' || audioContext.__miaowAudioGuarded) {
+    return audioContext;
+  }
+
+  const originalResume = typeof audioContext.resume === 'function' ? audioContext.resume.bind(audioContext) : null;
+  const originalSuspend = typeof audioContext.suspend === 'function' ? audioContext.suspend.bind(audioContext) : null;
+
+  Object.defineProperty(audioContext, '__miaowAudioGuarded', {
+    configurable: true,
+    value: true,
+  });
+
+  if (originalResume) {
+    audioContext.resume = () => {
+      if (effectiveMutedRef.current) {
+        mutedAudioContexts.add(audioContext);
+
+        if (originalSuspend) {
+          const suspendResult = originalSuspend();
+          if (typeof suspendResult?.catch === 'function') {
+            suspendResult.catch(() => {});
+          }
+        }
+
+        return Promise.resolve();
+      }
+
+      return originalResume();
+    };
+  }
+
+  if (originalSuspend) {
+    audioContext.suspend = () => {
+      mutedAudioContexts.add(audioContext);
+      return originalSuspend();
+    };
+  }
+
+  return audioContext;
 }
 
 function syncMutedAudioElements(audioElements, nextMuted) {
@@ -412,11 +452,13 @@ export function ExperienceDocument({ className = '', html, mode = 'full', muted 
     const WrappedAudioContext = isPreview
       ? SilentAudioContext
       : createTrackedConstructor(ownerWindow.AudioContext ?? ownerWindow.webkitAudioContext, audioContexts, (audioContext) => {
+          guardAudioContextInstance(audioContext, mutedAudioContexts, effectiveMutedRef);
           syncMutedAudioContexts(new Set([audioContext]), mutedAudioContexts, effectiveMutedRef.current);
         });
     const WrappedWebkitAudioContext = isPreview
       ? SilentAudioContext
       : createTrackedConstructor(ownerWindow.webkitAudioContext, audioContexts, (audioContext) => {
+          guardAudioContextInstance(audioContext, mutedAudioContexts, effectiveMutedRef);
           syncMutedAudioContexts(new Set([audioContext]), mutedAudioContexts, effectiveMutedRef.current);
         });
     const WrappedAudio = createTrackedConstructor(ownerWindow.Audio, audioElements, (audioElement) => {
@@ -818,8 +860,6 @@ export function ExperienceDocument({ className = '', html, mode = 'full', muted 
           runtimeWindow,
           runtimeWindow,
           WrappedAudio ?? ownerWindow.Audio,
-          WrappedAudioContext,
-          WrappedWebkitAudioContext,
           runtimeWindow.addEventListener,
           runtimeWindow.removeEventListener,
           runtimeWindow.dispatchEvent,
