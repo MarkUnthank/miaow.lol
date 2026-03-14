@@ -226,7 +226,6 @@
     let hasInteracted = false;
     let lastMouseX = 0, lastMouseY = 0;
     let mouseThrottle = false;
-    let audioCtx;
     let actionsUntilNextCollage = getNextCollageCountdown();
 
     
@@ -261,60 +260,27 @@
         return 9 + Math.floor(Math.random() * 3);
     }
 
-    function ensureAudioContext() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const meowSampleUrls = __LASER_SPRINT_MEOW_URLS__;
+
+    const meowPlayers = meowSampleUrls.map((src) => {
+        const audio = new Audio(src);
+        audio.preload = 'auto';
+        audio.volume = 0.42;
+        if (typeof audio.load === 'function') {
+            audio.load();
         }
-
-        return audioCtx;
-    }
-
-    function unlockAudio() {
-        const ctx = ensureAudioContext();
-
-        if (ctx.state === 'suspended') {
-            ctx.resume().catch(() => {});
-        }
-
-        return ctx;
-    }
+        return audio;
+    });
 
     function playMeow() {
-        const ctx = unlockAudio();
-        const now = ctx.currentTime;
-        const masterGain = ctx.createGain();
-        const bodyOsc = ctx.createOscillator();
-        const bodyFilter = ctx.createBiquadFilter();
-        const formantOsc = ctx.createOscillator();
-        const formantGain = ctx.createGain();
+        if (meowPlayers.length === 0) {
+            return;
+        }
 
-        masterGain.gain.setValueAtTime(0.0001, now);
-        masterGain.gain.exponentialRampToValueAtTime(0.16, now + 0.03);
-        masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
-        masterGain.connect(ctx.destination);
-
-        bodyFilter.type = 'lowpass';
-        bodyFilter.frequency.setValueAtTime(1400, now);
-        bodyOsc.type = 'triangle';
-        bodyOsc.frequency.setValueAtTime(760 + random(-40, 60), now);
-        bodyOsc.frequency.exponentialRampToValueAtTime(430 + random(-20, 40), now + 0.18);
-        bodyOsc.frequency.exponentialRampToValueAtTime(230 + random(-10, 20), now + 0.55);
-        bodyOsc.connect(bodyFilter);
-        bodyFilter.connect(masterGain);
-
-        formantOsc.type = 'sine';
-        formantOsc.frequency.setValueAtTime(1280 + random(-60, 120), now);
-        formantOsc.frequency.exponentialRampToValueAtTime(720 + random(-40, 80), now + 0.16);
-        formantGain.gain.setValueAtTime(0.0001, now);
-        formantGain.gain.exponentialRampToValueAtTime(0.05, now + 0.02);
-        formantGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
-        formantOsc.connect(formantGain);
-        formantGain.connect(masterGain);
-
-        bodyOsc.start(now);
-        formantOsc.start(now);
-        bodyOsc.stop(now + 0.6);
-        formantOsc.stop(now + 0.35);
+        const source = meowPlayers[Math.floor(Math.random() * meowPlayers.length)];
+        const audio = new Audio(source.src);
+        audio.volume = 0.36 + Math.random() * 0.12;
+        audio.play().catch(() => {});
     }
 
     function removeAfter(el, time) {
@@ -368,7 +334,6 @@
     
     document.addEventListener('mousedown', (e) => {
         hidePrompt();
-        unlockAudio();
         spawnClickBurst(e.clientX, e.clientY);
     });
 
@@ -376,13 +341,12 @@
     document.addEventListener('touchstart', (e) => {
         e.preventDefault(); 
         hidePrompt();
-        unlockAudio();
         Array.from(e.touches).forEach(touch => {
             spawnClickBurst(touch.clientX, touch.clientY);
         });
     }, {passive: false});
 
-    function spawnClickBurst(x, y) {
+    function spawnClickBurst(x, y, { allowCatHead = true } = {}) {
         const el = document.createElement('div');
         el.className = 'spawn click-burst';
         el.style.left = `${x - 75}px`; 
@@ -395,9 +359,10 @@
             
             el.classList.add('text');
             el.innerText = buzzwords[Math.floor(Math.random() * buzzwords.length)];
-        } else if (type < 0.6) {
+        } else if (allowCatHead && type < 0.6) {
             
             el.innerHTML = svgAssets.catHead;
+            playMeow();
         } else if (type < 0.8) {
             
             el.innerHTML = svgAssets.paw;
@@ -418,7 +383,6 @@
         if(e.repeat) return; 
         e.preventDefault(); 
         hidePrompt();
-        unlockAudio();
         actionsUntilNextCollage -= 1;
 
         if (actionsUntilNextCollage <= 0) {
@@ -437,7 +401,7 @@
         const maxY = Math.max(minY, window.innerHeight - 75);
         const x = random(minX, maxX);
         const y = random(minY, maxY);
-        spawnClickBurst(x, y);
+        spawnClickBurst(x, y, { allowCatHead: false });
     }
 
     function spawnCollage() {

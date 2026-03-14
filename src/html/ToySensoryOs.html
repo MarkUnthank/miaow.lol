@@ -504,9 +504,6 @@
                     spawnElement(e.clientX, e.clientY, true);
                 }, i * 50);
             }
-            
-            document.body.style.backgroundColor = varColor('--yellow');
-            setTimeout(() => document.body.style.backgroundColor = varColor('--sky'), 50);
         });
 
         
@@ -522,13 +519,6 @@
                 setTimeout(() => {
                     spawnElement(rx, ry, true);
                 }, Math.random() * 100); 
-            }
-
-            
-            if(Math.random() > 0.8) {
-                const bgColors = [varColor('--sky'), varColor('--pink'), varColor('--green-light')];
-                document.body.style.backgroundColor = bgColors[Math.floor(Math.random() * bgColors.length)];
-                setTimeout(() => document.body.style.backgroundColor = varColor('--sky'), 150);
             }
         });
 

@@ -424,15 +424,17 @@ export function Lobby({ experiences, activeIndex, isFullscreen, isMuted, onActiv
       </div>
 
       <div className="fullscreen-dock">
-        <button className="action-button action-button--dock" onClick={onToggleMute} type="button">
-          <SpeakerIcon className="action-button__icon" muted={isMuted} />
-          <span>{isMuted ? 'Unmute' : 'Mute'}</span>
-        </button>
+        <div className="fullscreen-dock__controls">
+          <button className="action-button action-button--dock" onClick={onToggleMute} type="button">
+            <SpeakerIcon className="action-button__icon" muted={isMuted} />
+            <span>{isMuted ? 'Unmute' : 'Mute'}</span>
+          </button>
 
-        <button className={`action-button action-button--dock ${isFullscreen ? 'is-armed' : ''}`.trim()} onClick={onToggleFullscreen} type="button">
-          <ExpandIcon className="action-button__icon" />
-          <span>{isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}</span>
-        </button>
+          <button className={`action-button action-button--dock ${isFullscreen ? 'is-armed' : ''}`.trim()} onClick={onToggleFullscreen} type="button">
+            <ExpandIcon className="action-button__icon" />
+            <span>{isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}</span>
+          </button>
+        </div>
       </div>
 
       <div className="random-dock">

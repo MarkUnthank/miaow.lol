@@ -390,6 +390,11 @@ export default function App() {
         <div className="ambient-blob ambient-blob--c" />
         <div className="ambient-grid" />
       </div>
+
+      <div className="app-wordmark" aria-label="miaow.lol">
+        miaow.lol
+      </div>
+
       <section className={`screen-layer lobby-layer ${mode === 'lobby' ? 'is-active' : 'is-hidden'}`}>
         <Lobby
           experiences={experiences}
