@@ -15,14 +15,7 @@ function OverlayButton({ children, icon, label, onClick }) {
 export function PlayerOverlay({ experience, isFullscreen, onBack, onPrevious, onRandom, onToggleFullscreen }) {
   return (
     <div className="player-overlay">
-      <div className="player-overlay__panel">
-        <p className="player-overlay__eyebrow">
-          Toy {experience.number}
-          <span className="player-overlay__separator" />
-          {experience.eyebrow}
-        </p>
-        <h2 className="player-overlay__title">{experience.title}</h2>
-      </div>
+      <h2 className="player-overlay__title">{experience.title}</h2>
 
       <div className="player-overlay__actions">
         <OverlayButton icon={HomeIcon} label="Back" onClick={onBack} />

@@ -1,7 +1,7 @@
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { Lobby } from './components/Lobby';
 import { Player } from './components/Player';
-import { experiences, getWrappedIndex } from './data/experiences';
+import { experiences, getRandomExperienceIndex, getWrappedIndex } from './data/experiences';
 
 function toThemeStyle(theme) {
   return {
@@ -24,7 +24,6 @@ export default function App() {
   const [mode, setMode] = useState('lobby');
   const [activeIndex, setActiveIndex] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [launchInFullscreen, setLaunchInFullscreen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const themedExperience = useMemo(
@@ -83,10 +82,6 @@ export default function App() {
     const nextIndex = getWrappedIndex(index);
     experiences[nextIndex].preload();
 
-    if (launchInFullscreen && !document.fullscreenElement) {
-      await requestFullscreen();
-    }
-
     startTransition(() => {
       setCurrentIndex(nextIndex);
       setActiveIndex(nextIndex);
@@ -128,15 +123,6 @@ export default function App() {
     await requestFullscreen();
   }
 
-  async function toggleLobbyFullscreenPreference() {
-    if (isFullscreen) {
-      await exitFullscreen();
-      return;
-    }
-
-    setLaunchInFullscreen((previousValue) => !previousValue);
-  }
-
   return (
     <main ref={appRef} className={`app-shell app-shell--${mode}`} style={toThemeStyle(themedExperience.theme)}>
       <div className="ambient-layer" aria-hidden="true">
@@ -150,11 +136,8 @@ export default function App() {
         <Lobby
           experiences={experiences}
           activeIndex={activeIndex}
-          isFullscreen={isFullscreen}
-          launchInFullscreen={launchInFullscreen}
           onActiveIndexChange={setActiveIndex}
           onLaunch={openExperience}
-          onToggleLaunchFullscreen={toggleLobbyFullscreenPreference}
         />
       </section>
 
