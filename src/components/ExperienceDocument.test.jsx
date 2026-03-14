@@ -87,7 +87,9 @@ describe('ExperienceDocument', () => {
 
     class MockAudio {
       constructor() {
+        this.defaultMuted = false;
         this.muted = false;
+        this.volume = 0.8;
         createdAudio.push(this);
       }
     }
@@ -110,13 +112,17 @@ describe('ExperienceDocument', () => {
 
       await waitFor(() => {
         expect(createdAudio).toHaveLength(1);
+        expect(createdAudio[0].defaultMuted).toBe(true);
         expect(createdAudio[0].muted).toBe(true);
+        expect(createdAudio[0].volume).toBe(0);
       });
 
       rerender(<ExperienceDocument html={html} muted={false} title="Audio toy" />);
 
       await waitFor(() => {
+        expect(createdAudio[0].defaultMuted).toBe(false);
         expect(createdAudio[0].muted).toBe(false);
+        expect(createdAudio[0].volume).toBe(0.8);
       });
     } finally {
       Object.defineProperty(window, 'Audio', {

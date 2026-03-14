@@ -55,6 +55,7 @@ const BASE_RUNTIME_CSS = `
     outline: none;
   }
 `;
+const audioElementVolumes = new WeakMap();
 
 function transformCss(css) {
   return css
@@ -183,7 +184,31 @@ function syncMutedAudioElements(audioElements, nextMuted) {
       return;
     }
 
+    if (typeof audioElement.defaultMuted === 'boolean') {
+      audioElement.defaultMuted = nextMuted;
+    }
+
     audioElement.muted = nextMuted;
+
+    if (typeof audioElement.volume !== 'number') {
+      return;
+    }
+
+    if (nextMuted) {
+      if (!audioElementVolumes.has(audioElement)) {
+        audioElementVolumes.set(audioElement, audioElement.volume);
+      }
+
+      audioElement.volume = 0;
+      return;
+    }
+
+    const previousVolume = audioElementVolumes.get(audioElement);
+
+    if (typeof previousVolume === 'number') {
+      audioElement.volume = previousVolume;
+      audioElementVolumes.delete(audioElement);
+    }
   });
 }
 

@@ -19,8 +19,10 @@ export function PlayerOverlay({ isFullscreen, isMuted, onBack, onPrevious, onRan
         <OverlayButton icon={HomeIcon} label="Back" onClick={onBack} />
         <OverlayButton icon={ArrowLeftIcon} label="Previous" onClick={onPrevious} />
         <OverlayButton icon={ShuffleIcon} label="Random next" onClick={onRandom} />
-        {!isFullscreen ? <OverlayButton icon={ExpandIcon} label="Fullscreen" onClick={onToggleFullscreen} /> : null}
-        <OverlayButton icon={SpeakerIcon} iconProps={{ muted: isMuted }} label={isMuted ? 'Unmute' : 'Mute'} onClick={onToggleMute} />
+        <div className="player-overlay__utility">
+          {!isFullscreen ? <OverlayButton icon={ExpandIcon} label="Fullscreen" onClick={onToggleFullscreen} /> : null}
+          <OverlayButton icon={SpeakerIcon} iconProps={{ muted: isMuted }} label={isMuted ? 'Unmute' : 'Mute'} onClick={onToggleMute} />
+        </div>
       </div>
     </div>
   );
