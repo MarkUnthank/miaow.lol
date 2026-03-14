@@ -158,15 +158,6 @@ button {
   opacity: 0.72;
 }
 
-.player-overlay__title,
-.player-loading__title {
-  margin: 0;
-  font-family: var(--brand-display-font);
-  font-size: clamp(1.6rem, 2.6vw, 2.4rem);
-  letter-spacing: -0.04em;
-  line-height: 0.95;
-}
-
 .player-loading__copy {
   margin: 0;
   line-height: 1.6;
@@ -1743,15 +1734,8 @@ button {
   inset: 0;
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
+  justify-content: flex-end;
   padding: clamp(1rem, 2vw, 1.5rem);
-}
-
-.player-overlay__title {
-  max-width: min(24rem, 60vw);
-  color: white;
-  text-shadow: 0 8px 24px rgba(0, 0, 0, 0.42);
 }
 
 .player-loading {
@@ -2212,12 +2196,7 @@ button {
   }
 
   .player-overlay {
-    flex-direction: column;
-    justify-content: space-between;
-  }
-
-  .player-overlay__title {
-    max-width: 100%;
+    justify-content: flex-start;
   }
 
   .player-overlay__actions {

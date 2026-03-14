@@ -12,11 +12,9 @@ function OverlayButton({ children, icon, label, onClick }) {
   );
 }
 
-export function PlayerOverlay({ experience, isFullscreen, onBack, onPrevious, onRandom, onToggleFullscreen }) {
+export function PlayerOverlay({ isFullscreen, onBack, onPrevious, onRandom, onToggleFullscreen }) {
   return (
     <div className="player-overlay">
-      <h2 className="player-overlay__title">{experience.title}</h2>
-
       <div className="player-overlay__actions">
         <OverlayButton icon={HomeIcon} label="Back" onClick={onBack} />
         <OverlayButton icon={ArrowLeftIcon} label="Previous" onClick={onPrevious} />
