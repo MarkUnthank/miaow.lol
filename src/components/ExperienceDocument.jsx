@@ -383,6 +383,11 @@ export function ExperienceDocument({ className = '', html, mode = 'full', previe
       });
     };
 
+    const syncRuntimeSize = () => {
+      updateViewportUnits();
+      dispatchResize();
+    };
+
     const resizeObserver = new ownerWindow.ResizeObserver(() => {
       updateViewportUnits();
       dispatchResize();
@@ -622,8 +627,8 @@ export function ExperienceDocument({ className = '', html, mode = 'full', previe
 
     runtimeWindow.getComputedStyle = ownerWindow.getComputedStyle.bind(ownerWindow);
 
-    updateViewportUnits();
     resizeObserver.observe(hostElement);
+    syncRuntimeSize();
 
     const handlePointerFocus = () => {
       focusStage();
@@ -691,6 +696,34 @@ export function ExperienceDocument({ className = '', html, mode = 'full', previe
       } catch (error) {
         console.error(`Failed to mount toy "${experience.title}".`, error);
       }
+    }
+
+    let isDisposed = false;
+
+    const scheduleRuntimeSizeSettle = () => {
+      runtimeWindow.requestAnimationFrame(() => {
+        syncRuntimeSize();
+
+        runtimeWindow.requestAnimationFrame(() => {
+          syncRuntimeSize();
+        });
+      });
+
+      runtimeWindow.setTimeout(() => {
+        syncRuntimeSize();
+      }, 120);
+    };
+
+    scheduleRuntimeSizeSettle();
+
+    if (ownerDocument.fonts?.ready && typeof ownerDocument.fonts.ready.then === 'function') {
+      ownerDocument.fonts.ready
+        .then(() => {
+          if (!isDisposed) {
+            scheduleRuntimeSizeSettle();
+          }
+        })
+        .catch(() => {});
     }
 
     if (isPreview) {
@@ -768,6 +801,7 @@ export function ExperienceDocument({ className = '', html, mode = 'full', previe
     }
 
     return () => {
+      isDisposed = true;
       resizeObserver.disconnect();
       if (!isPreview) {
         bodyElement.removeEventListener('pointerdown', handlePointerFocus);
