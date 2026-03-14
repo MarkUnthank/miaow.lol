@@ -400,12 +400,6 @@ export default function App() {
         <div className="app-wordmark" aria-label="miaow.lol">
           miaow.lol
         </div>
-        <p className="app-credit">
-          An open-source project by{' '}
-          <a href="https://reallynice.company" rel="author noreferrer" target="_blank">
-            Really Nice
-          </a>
-        </p>
       </div>
 
       <section className={`screen-layer lobby-layer ${mode === 'lobby' ? 'is-active' : 'is-hidden'}`}>

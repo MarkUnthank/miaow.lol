@@ -69,7 +69,7 @@ vi.mock('./components/Player', async () => {
           jsx('div', { 'data-testid': 'player-title', children: experience.title }),
           jsx('div', { 'data-testid': 'player-fullscreen', children: String(isFullscreen) }),
           jsx('div', { 'data-testid': 'player-muted', children: String(isMuted) }),
-          jsx('button', { onClick: onBack, type: 'button', children: 'back' }),
+          jsx('button', { onClick: onBack, type: 'button', children: 'home' }),
           jsx('button', { onClick: onPrevious, type: 'button', children: 'previous' }),
           jsx('button', { onClick: onRandom, type: 'button', children: 'random' }),
           jsx('button', { onClick: onToggleFullscreen, type: 'button', children: 'toggle-player-fullscreen' }),
@@ -292,7 +292,7 @@ describe('App', () => {
     expect(window.history.state).toMatchObject({ mode: 'player', currentIndex: 1 });
   });
 
-  it('uses the Back button to return to the root lobby state instead of the last experience', async () => {
+  it('uses the Home button to return to the root lobby state instead of the last experience', async () => {
     const user = userEvent.setup();
     render(<App />);
     const rootLobbyState = JSON.parse(JSON.stringify(window.history.state));
@@ -307,7 +307,7 @@ describe('App', () => {
       }
     });
 
-    await user.click(screen.getByRole('button', { name: 'back' }));
+    await user.click(screen.getByRole('button', { name: 'home' }));
 
     expect(historyGoSpy).toHaveBeenCalledWith(-2);
     expect(screen.getByTestId('lobby')).toBeInTheDocument();

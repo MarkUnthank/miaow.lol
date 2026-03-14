@@ -16,7 +16,7 @@ export function PlayerOverlay({ isFullscreen, isMuted, onBack, onPrevious, onRan
   return (
     <div className="player-overlay">
       <div className="player-overlay__actions">
-        <OverlayButton icon={HomeIcon} label="Back" onClick={onBack} />
+        <OverlayButton icon={HomeIcon} label="Home" onClick={onBack} />
         <OverlayButton icon={ArrowLeftIcon} label="Previous" onClick={onPrevious} />
         <OverlayButton icon={ShuffleIcon} label="Random next" onClick={onRandom} />
         <div className="player-overlay__utility">

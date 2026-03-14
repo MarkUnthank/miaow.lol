@@ -67,13 +67,14 @@
 
         h1 {
             color: var(--text);
-            font-size: clamp(4rem, 12vw, 9rem);
+            font-size: clamp(3rem, 10vw, 9rem);
             line-height: 0.8;
             margin: 0;
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             justify-content: center;
             text-transform: uppercase;
+            white-space: nowrap;
         }
 
         
@@ -162,6 +163,12 @@
         @keyframes restingWiggle {
             0% { transform: scale(1) rotate(calc(var(--final-rot) - 2deg)); }
             100% { transform: scale(1.02) rotate(calc(var(--final-rot) + 2deg)); }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: clamp(2.4rem, 11vw, 4.25rem);
+            }
         }
 
     </style>
