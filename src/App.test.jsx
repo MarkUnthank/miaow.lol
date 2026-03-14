@@ -177,23 +177,41 @@ describe('App', () => {
     expect(screen.getByTestId('lobby')).toBeInTheDocument();
   });
 
-  it('uses browser history for the in-player Back button when an earlier experience exists', async () => {
+  it('uses the Previous button to go to the last experience in the player stack', async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(screen.getByRole('button', { name: 'launch-second' }));
-    const previousPlayerState = JSON.parse(JSON.stringify(window.history.state));
+    expect(screen.getByTestId('player-title')).toHaveTextContent('Box Fort');
 
     await user.click(screen.getByRole('button', { name: 'random' }));
     expect(screen.getByTestId('player-title')).toHaveTextContent('Nap Nebula');
 
-    const historyBackSpy = vi.spyOn(window.history, 'back').mockImplementation(() => {
-      window.dispatchEvent(new PopStateEvent('popstate', { state: previousPlayerState }));
+    await user.click(screen.getByRole('button', { name: 'previous' }));
+
+    expect(screen.getByTestId('player-title')).toHaveTextContent('Box Fort');
+    expect(window.history.state).toMatchObject({ mode: 'player', currentIndex: 1 });
+  });
+
+  it('uses the Back button to return to the root lobby state instead of the last experience', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const rootLobbyState = JSON.parse(JSON.stringify(window.history.state));
+
+    await user.click(screen.getByRole('button', { name: 'launch-second' }));
+    await user.click(screen.getByRole('button', { name: 'random' }));
+    expect(screen.getByTestId('player-title')).toHaveTextContent('Nap Nebula');
+
+    const historyGoSpy = vi.spyOn(window.history, 'go').mockImplementation((delta) => {
+      if (delta === -2) {
+        window.dispatchEvent(new PopStateEvent('popstate', { state: rootLobbyState }));
+      }
     });
 
     await user.click(screen.getByRole('button', { name: 'back' }));
 
-    expect(historyBackSpy).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('player-title')).toHaveTextContent('Box Fort');
+    expect(historyGoSpy).toHaveBeenCalledWith(-2);
+    expect(screen.getByTestId('lobby')).toBeInTheDocument();
+    expect(screen.getByTestId('lobby-active-index')).toHaveTextContent('0');
   });
 });

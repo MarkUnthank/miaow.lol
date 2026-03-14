@@ -230,7 +230,7 @@ export default function App() {
 
   function goBackToLobby() {
     if (historyReadyRef.current && historyStepRef.current > 0) {
-      window.history.back();
+      window.history.go(-historyStepRef.current);
       return;
     }
 
