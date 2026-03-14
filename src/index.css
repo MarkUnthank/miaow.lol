@@ -196,8 +196,6 @@ button {
 
 .action-button:hover,
 .action-button:focus-visible,
-.carousel-arrow:hover,
-.carousel-arrow:focus-visible,
 .overlay-button:hover,
 .overlay-button:focus-visible,
 .toy-card:hover,
@@ -206,7 +204,6 @@ button {
 }
 
 .action-button:active,
-.carousel-arrow:active,
 .overlay-button:active,
 .toy-card:active {
   transform: translateY(1px) scale(0.985);
@@ -314,6 +311,10 @@ button {
   background: rgba(255, 255, 255, 0.78);
   box-shadow: var(--shell-shadow);
   backdrop-filter: blur(18px);
+  transition:
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    background 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .carousel-arrow--left {
@@ -324,6 +325,15 @@ button {
 .carousel-arrow--right {
   right: 0.3rem;
   transform: translateY(-50%);
+}
+
+.carousel-arrow:hover,
+.carousel-arrow:focus-visible {
+  transform: translateY(calc(-50% - 2px));
+}
+
+.carousel-arrow:active {
+  transform: translateY(calc(-50% + 1px)) scale(0.985);
 }
 
 .toy-card {
