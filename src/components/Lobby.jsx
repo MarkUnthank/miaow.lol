@@ -37,6 +37,11 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
       return;
     }
 
+    if (behavior === 'auto' || behavior === 'instant') {
+      track.scrollLeft = left;
+      return;
+    }
+
     if (typeof track.scrollTo === 'function') {
       track.scrollTo({ left, behavior });
       return;

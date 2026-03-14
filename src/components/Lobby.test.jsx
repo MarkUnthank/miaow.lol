@@ -35,6 +35,29 @@ function createExperiences() {
 }
 
 describe('Lobby', () => {
+  it('centers the initial loop position without using smooth scroll animation', () => {
+    const scrollToSpy = vi.fn();
+
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      configurable: true,
+      value: scrollToSpy,
+      writable: true,
+    });
+
+    render(
+      <Lobby
+        experiences={createExperiences()}
+        activeIndex={0}
+        isFullscreen={false}
+        onActiveIndexChange={vi.fn()}
+        onLaunch={vi.fn()}
+        onToggleFullscreen={vi.fn()}
+      />,
+    );
+
+    expect(scrollToSpy).not.toHaveBeenCalled();
+  });
+
   it('renders repeated experience copies for a continuous rail', () => {
     render(
       <Lobby
