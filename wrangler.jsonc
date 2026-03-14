@@ -2,7 +2,14 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "miaow-lol",
   "main": "./worker/index.js",
+  "workers_dev": false,
   "compatibility_date": "2026-03-14",
+  "routes": [
+    {
+      "pattern": "miaow.lol",
+      "custom_domain": true
+    }
+  ],
   "assets": {
     "binding": "ASSETS",
     "directory": "./dist",
