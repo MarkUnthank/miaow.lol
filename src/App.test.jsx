@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { APP_API_NAME } from './appApi';
@@ -33,7 +33,7 @@ const appTestMocks = vi.hoisted(() => {
 
   return {
     experiences,
-    getRandomExperienceIndex: vi.fn(() => 2),
+    getRandomExperienceNavigation: vi.fn(() => ({ nextIndex: 2, seenIndices: [2] })),
   };
 });
 
@@ -77,7 +77,16 @@ vi.mock('./components/Player', async () => {
 
 vi.mock('./data/experiences', () => ({
   experiences: appTestMocks.experiences,
-  getRandomExperienceIndex: appTestMocks.getRandomExperienceIndex,
+  getRandomExperienceNavigation: appTestMocks.getRandomExperienceNavigation,
+  markExperienceSeen: (seenIndices, nextIndex) => {
+    const nextSeenIndices = [...seenIndices];
+
+    if (!nextSeenIndices.includes(nextIndex)) {
+      nextSeenIndices.push(nextIndex);
+    }
+
+    return nextSeenIndices;
+  },
   getWrappedIndex: (index) => {
     const length = appTestMocks.experiences.length;
     return (index + length) % length;
@@ -147,7 +156,7 @@ describe('App', () => {
 
     window.history.replaceState(null, '', '/');
     delete window[APP_API_NAME];
-    appTestMocks.getRandomExperienceIndex.mockReset().mockReturnValue(2);
+    appTestMocks.getRandomExperienceNavigation.mockReset().mockReturnValue({ nextIndex: 2, seenIndices: [2] });
     appTestMocks.experiences.forEach((experience) => {
       experience.preload.mockClear();
       experience.loadPreviewHtml.mockClear();
@@ -246,7 +255,7 @@ describe('App', () => {
     expect(screen.getByTestId('lobby-active-index')).toHaveTextContent('0');
   });
 
-  it('opens a multi-option share menu on desktop and can copy the exact toy link', async () => {
+  it('opens a multi-option share menu on desktop', async () => {
     const user = userEvent.setup();
     render(<App />);
     const expectedUrl = `${window.location.origin}/?experience=experience-0`;
@@ -258,12 +267,7 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: 'WhatsApp' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Telegram' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Email' })).toHaveAttribute('href', expect.stringContaining(encodeURIComponent(expectedUrl)));
-
-    await user.click(screen.getByRole('button', { name: 'Copy link' }));
-
-    await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent('Link copied.');
-    });
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
   it('uses the native share sheet on mobile-like devices', async () => {
@@ -307,5 +311,22 @@ describe('App', () => {
 
     expect(screen.getByTestId('player-title')).toHaveTextContent('Nap Nebula');
     expect(window.history.state).toMatchObject({ mode: 'player', currentIndex: 2, step: 1 });
+  });
+
+  it('tracks seen experiences across random-next selections before repeating', async () => {
+    const user = userEvent.setup();
+    appTestMocks.getRandomExperienceNavigation
+      .mockImplementationOnce(() => ({ nextIndex: 2, seenIndices: [1, 2] }))
+      .mockImplementationOnce(() => ({ nextIndex: 0, seenIndices: [1, 2, 0] }));
+
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'launch-second' }));
+    await user.click(screen.getByRole('button', { name: 'random' }));
+    await user.click(screen.getByRole('button', { name: 'random' }));
+
+    expect(appTestMocks.getRandomExperienceNavigation).toHaveBeenNthCalledWith(1, 1, [1]);
+    expect(appTestMocks.getRandomExperienceNavigation).toHaveBeenNthCalledWith(2, 2, [1, 2]);
+    expect(screen.getByTestId('player-title')).toHaveTextContent('Cat Mash Chaos');
   });
 });

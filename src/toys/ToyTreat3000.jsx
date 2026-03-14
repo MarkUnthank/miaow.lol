@@ -1,4 +1,4 @@
-import html from '../../sources/design-ae534996-db42-43ca-b649-c55a04fb3cdd.html?raw';
+import html from '../html/ToyTreat3000.html?raw';
 import { createToyComponent } from './createToyComponent';
 
 export const previewHtml = html;

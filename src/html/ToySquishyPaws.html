@@ -200,21 +200,6 @@
         100% { transform: scale(1.5) translateY(-50px) rotate(var(--rot-end)); opacity: 0; filter: blur(4px); }
     }
 
-    
-    #frenzy-flash {
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 80%);
-        z-index: 90;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.1s;
-    }
-    .frenzy-active {
-        opacity: 1 !important;
-        transition: opacity 0.5s ease-out !important;
-    }
-
 </style>
 </head>
 <body vid="6">
@@ -233,8 +218,6 @@
     </div>
 
     <div id="particle-container" vid="15"></div>
-    <div id="frenzy-flash" vid="16"></div>
-
     <div class="prompt-container" id="prompt" vid="17">
         <div class="prompt-text" vid="18">Smash the<br vid="19">Keyboard!</div>
         <div class="prompt-sub" vid="20">Or wiggle the mouse!</div>
@@ -245,8 +228,6 @@
 
     const container = document.getElementById('particle-container');
     const prompt = document.getElementById('prompt');
-    const frenzyFlash = document.getElementById('frenzy-flash');
-    
     let isInteracting = false;
     let keyPressCount = 0;
     let frenzyTimer;
@@ -417,14 +398,11 @@
         clearTimeout(frenzyTimer);
         
         if (keyPressCount > 12) {
-            
-            frenzyFlash.classList.add('frenzy-active');
             playMeowSlide();
             for(let i=0; i<8; i++) {
                 setTimeout(spawnSmash, i * 50);
             }
             keyPressCount = 0;
-            setTimeout(() => frenzyFlash.classList.remove('frenzy-active'), 100);
         }
 
         frenzyTimer = setTimeout(() => {

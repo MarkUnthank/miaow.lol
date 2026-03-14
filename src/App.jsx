@@ -2,7 +2,7 @@ import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { Lobby } from './components/Lobby';
 import { Player } from './components/Player';
 import { ShareDock } from './components/ShareDock';
-import { experiences, getRandomExperienceIndex, getWrappedIndex } from './data/experiences';
+import { experiences, getRandomExperienceNavigation, getWrappedIndex, markExperienceSeen } from './data/experiences';
 import { APP_API_NAME } from './appApi';
 import { buildExperienceUrl, buildHistoryPath, buildHomeUrl, getExperienceIndexFromLocation } from './share';
 
@@ -43,6 +43,7 @@ function getInitialAppState() {
       currentIndex: 0,
       hasRootHistory: true,
       mode: 'lobby',
+      seenIndices: [],
       step: 0,
     };
   }
@@ -53,6 +54,7 @@ function getInitialAppState() {
     return {
       ...historyState,
       hasRootHistory: historyState.mode === 'lobby' || historyState.step > 0,
+      seenIndices: historyState.mode === 'player' ? [historyState.currentIndex] : [],
     };
   }
 
@@ -64,6 +66,7 @@ function getInitialAppState() {
       currentIndex: sharedExperienceIndex,
       hasRootHistory: false,
       mode: 'player',
+      seenIndices: [sharedExperienceIndex],
       step: 0,
     };
   }
@@ -73,6 +76,7 @@ function getInitialAppState() {
     currentIndex: 0,
     hasRootHistory: true,
     mode: 'lobby',
+    seenIndices: [],
     step: 0,
   };
 }
@@ -113,6 +117,7 @@ export default function App() {
   const requestFullscreenRef = useRef(() => Promise.resolve(undefined));
   const exitFullscreenRef = useRef(() => Promise.resolve(undefined));
   const toggleFullscreenRef = useRef(() => Promise.resolve(undefined));
+  const seenExperienceIndexesRef = useRef(initialAppState.seenIndices);
   const historyStepRef = useRef(initialAppState.step);
   const [mode, setMode] = useState(initialAppState.mode);
   const [activeIndex, setActiveIndex] = useState(initialAppState.activeIndex);
@@ -152,6 +157,12 @@ export default function App() {
 
     writeHistoryState(nextState, historyMode);
     applyAppState(nextState);
+  }
+
+  function rememberSeenExperience(nextIndex) {
+    const nextSeenIndices = markExperienceSeen(seenExperienceIndexesRef.current, nextIndex);
+    seenExperienceIndexesRef.current = nextSeenIndices;
+    return nextSeenIndices;
   }
 
   useEffect(() => {
@@ -262,6 +273,8 @@ export default function App() {
 
   async function openExperience(index) {
     const nextIndex = getWrappedIndex(index);
+    rememberSeenExperience(nextIndex);
+
     navigateToState(
       {
         activeIndex: nextIndex,
@@ -274,7 +287,9 @@ export default function App() {
   }
 
   function openRandomExperience() {
-    openExperience(getRandomExperienceIndex(activeIndex));
+    const { nextIndex, seenIndices } = getRandomExperienceNavigation(activeIndex, seenExperienceIndexesRef.current);
+    seenExperienceIndexesRef.current = seenIndices;
+    openExperience(nextIndex);
   }
 
   function goBackToLobby() {
@@ -296,6 +311,8 @@ export default function App() {
 
   function showPreviousExperience() {
     const previousIndex = getWrappedIndex(currentIndex - 1);
+    rememberSeenExperience(previousIndex);
+
     navigateToState(
       {
         activeIndex: previousIndex,
@@ -308,7 +325,8 @@ export default function App() {
   }
 
   function showRandomExperience() {
-    const nextIndex = getRandomExperienceIndex(currentIndex);
+    const { nextIndex, seenIndices } = getRandomExperienceNavigation(currentIndex, seenExperienceIndexesRef.current);
+    seenExperienceIndexesRef.current = seenIndices;
     navigateToState(
       {
         activeIndex: nextIndex,

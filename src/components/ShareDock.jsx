@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildShareLinks, buildSharePayload, shouldUseNativeShare } from '../share';
-import { ShareIcon } from './Icons';
+import {
+  EmailIcon,
+  FacebookIcon,
+  LinkIcon,
+  RedditIcon,
+  ShareIcon,
+  TelegramIcon,
+  WhatsAppIcon,
+  XLogoIcon,
+} from './Icons';
 
 const NUDGE_DELAY = 15_000;
 const NUDGE_DURATION = 1_150;
@@ -41,13 +50,11 @@ export function ShareDock({ experience }) {
   const nudgeReleaseRef = useRef(0);
   const [isOpen, setIsOpen] = useState(false);
   const [isNudging, setIsNudging] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
   const payload = useMemo(() => buildSharePayload(experience, window.location), [experience]);
   const links = useMemo(() => buildShareLinks(payload), [payload]);
 
   useEffect(() => {
     setIsOpen(false);
-    setStatusMessage('');
   }, [experience.id]);
 
   useEffect(() => {
@@ -100,7 +107,6 @@ export function ShareDock({ experience }) {
   }, [isOpen]);
 
   async function handlePrimaryClick() {
-    setStatusMessage('');
     setIsNudging(false);
 
     if (shouldUseNativeShare()) {
@@ -118,14 +124,17 @@ export function ShareDock({ experience }) {
   }
 
   async function handleCopyLink() {
-    const didCopy = await copyText(payload.url);
-    setStatusMessage(didCopy ? 'Link copied.' : 'Copy failed.');
+    await copyText(payload.url);
   }
 
-  async function handleCopyBlurb() {
-    const didCopy = await copyText(`${payload.title}\n\n${payload.text}\n\n${payload.url}`);
-    setStatusMessage(didCopy ? 'Blurb copied.' : 'Copy failed.');
-  }
+  const shareItems = [
+    { href: links.email, icon: EmailIcon, label: 'Email' },
+    { href: links.whatsapp, icon: WhatsAppIcon, label: 'WhatsApp' },
+    { href: links.telegram, icon: TelegramIcon, label: 'Telegram' },
+    { href: links.x, icon: XLogoIcon, label: 'X' },
+    { href: links.facebook, icon: FacebookIcon, label: 'Facebook' },
+    { href: links.reddit, icon: RedditIcon, label: 'Reddit' },
+  ];
 
   return (
     <div className="share-dock" ref={dockRef}>
@@ -138,34 +147,16 @@ export function ShareDock({ experience }) {
 
           <div className="share-dock__grid">
             <button className="share-dock__item" onClick={handleCopyLink} type="button">
-              Copy link
+              <LinkIcon className="share-dock__item-icon" />
+              <span>Copy link</span>
             </button>
-            <button className="share-dock__item" onClick={handleCopyBlurb} type="button">
-              Copy blurb
-            </button>
-            <a className="share-dock__item" href={links.email} onClick={() => setIsOpen(false)}>
-              Email
-            </a>
-            <a className="share-dock__item" href={links.whatsapp} onClick={() => setIsOpen(false)} rel="noreferrer" target="_blank">
-              WhatsApp
-            </a>
-            <a className="share-dock__item" href={links.telegram} onClick={() => setIsOpen(false)} rel="noreferrer" target="_blank">
-              Telegram
-            </a>
-            <a className="share-dock__item" href={links.x} onClick={() => setIsOpen(false)} rel="noreferrer" target="_blank">
-              X
-            </a>
-            <a className="share-dock__item" href={links.facebook} onClick={() => setIsOpen(false)} rel="noreferrer" target="_blank">
-              Facebook
-            </a>
-            <a className="share-dock__item" href={links.reddit} onClick={() => setIsOpen(false)} rel="noreferrer" target="_blank">
-              Reddit
-            </a>
+            {shareItems.map(({ href, icon: Icon, label }) => (
+              <a className="share-dock__item" href={href} key={label} onClick={() => setIsOpen(false)} rel="noreferrer" target="_blank">
+                <Icon className="share-dock__item-icon" />
+                <span>{label}</span>
+              </a>
+            ))}
           </div>
-
-          <p className="share-dock__status" role="status">
-            {statusMessage || 'Share the exact toy link or copy a blurb with the URL attached.'}
-          </p>
         </div>
       ) : null}
 

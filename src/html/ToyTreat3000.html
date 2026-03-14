@@ -305,18 +305,6 @@
             animation: popIn 0.2s ease-out forwards, fallDown 1s ease-in 0.5s forwards;
         }
 
-        
-        @keyframes shake {
-            0%, 100% { transform: translate(0, 0); }
-            25% { transform: translate(-5px, 5px); }
-            50% { transform: translate(5px, -5px); }
-            75% { transform: translate(-5px, -5px); }
-        }
-        .shake-active {
-            animation: shake 0.1s ease-in-out;
-        }
-
-        
         #start-overlay {
             position: absolute;
             inset: 0;
@@ -594,11 +582,6 @@
             el.style.setProperty('--color', randomColor());
             el.style.transform = `translate(-50%, -50%)`;
             
-            
-            document.body.classList.remove('shake-active');
-            void document.body.offsetWidth; 
-            document.body.classList.add('shake-active');
-
             setTimeout(() => el.remove(), 3000);
         }
 

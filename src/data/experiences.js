@@ -460,16 +460,71 @@ export function getWrappedIndex(index) {
   return (index + length) % length;
 }
 
-export function getRandomExperienceIndex(currentIndex) {
+export function markExperienceSeen(seenIndices, nextIndex) {
+  const normalizedSeen = [];
+  const seenIndexSet = new Set();
+
+  seenIndices.forEach((seenIndex) => {
+    if (!Number.isInteger(seenIndex)) {
+      return;
+    }
+
+    const wrappedIndex = getWrappedIndex(seenIndex);
+
+    if (seenIndexSet.has(wrappedIndex)) {
+      return;
+    }
+
+    seenIndexSet.add(wrappedIndex);
+    normalizedSeen.push(wrappedIndex);
+  });
+
+  const wrappedNextIndex = getWrappedIndex(nextIndex);
+
+  if (!seenIndexSet.has(wrappedNextIndex)) {
+    normalizedSeen.push(wrappedNextIndex);
+  }
+
+  return normalizedSeen;
+}
+
+export function getRandomExperienceNavigation(currentIndex, seenIndices = []) {
   if (experiences.length < 2) {
-    return 0;
+    return {
+      nextIndex: 0,
+      seenIndices: markExperienceSeen([], 0),
+    };
   }
 
-  let nextIndex = currentIndex;
+  const wrappedCurrentIndex = getWrappedIndex(currentIndex);
+  const seenIndexSet = new Set(markExperienceSeen(seenIndices, wrappedCurrentIndex));
+  const candidateIndexes = [];
+  const unseenCandidateIndexes = [];
 
-  while (nextIndex === currentIndex) {
-    nextIndex = Math.floor(Math.random() * experiences.length);
+  for (let index = 0; index < experiences.length; index += 1) {
+    if (index === wrappedCurrentIndex) {
+      continue;
+    }
+
+    candidateIndexes.push(index);
+
+    if (!seenIndexSet.has(index)) {
+      unseenCandidateIndexes.push(index);
+    }
   }
 
-  return nextIndex;
+  const pool = unseenCandidateIndexes.length > 0 ? unseenCandidateIndexes : candidateIndexes;
+  const nextIndex = pool[Math.floor(Math.random() * pool.length)];
+
+  return {
+    nextIndex,
+    seenIndices:
+      unseenCandidateIndexes.length > 0
+        ? markExperienceSeen(seenIndices, nextIndex)
+        : [nextIndex],
+  };
+}
+
+export function getRandomExperienceIndex(currentIndex, seenIndices = []) {
+  return getRandomExperienceNavigation(currentIndex, seenIndices).nextIndex;
 }

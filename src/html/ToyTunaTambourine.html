@@ -321,26 +321,6 @@
             100% { transform: scale(1) translate(0, 0); opacity: 1; }
         }
 
-        
-        .flash {
-            position: absolute;
-            inset: 0;
-            background-color: rgba(255, 255, 255, 0.4);
-            z-index: 90;
-            pointer-events: none;
-            opacity: 0;
-        }
-
-        .flash.active {
-            animation: flashAnim 0.1s ease-out;
-        }
-
-        @keyframes flashAnim {
-            0% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-        
-        
         .badge {
             position: absolute;
             top: 20px;
@@ -396,14 +376,12 @@
                 <div class="overlay-instruction" vid="27">Click &amp; Mash Keys!</div>
             </div>
 
-            <div class="flash" id="flash" vid="28"></div>
         </div>
     </div>
 
     <script vid="29">
         const playArea = document.getElementById('playArea');
         const overlay = document.getElementById('overlay');
-        const flash = document.getElementById('flash');
         
         let isStarted = false;
         let audioCtx;
@@ -623,17 +601,6 @@
             if (!isStarted) return;
             
             if (['Meta', 'Control', 'Alt', 'Shift', 'Tab', 'Escape'].includes(e.key)) return;
-
-            
-            flash.classList.remove('active');
-            void flash.offsetWidth; 
-            flash.classList.add('active');
-
-            
-            document.querySelector('.app-container').style.transform = `translate(calc(-50% + ${randomRange(-10, 10)}px), calc(-50% + ${randomRange(-10, 10)}px))`;
-            setTimeout(() => {
-                document.querySelector('.app-container').style.transform = 'translate(-50%, -50%)';
-            }, 50);
 
             createSpawnElement(0, 0, 'mash'); 
             playChord();

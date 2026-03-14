@@ -300,19 +300,6 @@
             50% { transform: scale(1.05); }
         }
 
-        @keyframes shakeWindow {
-            0% { transform: translate(0, 0) rotate(0); }
-            20% { transform: translate(-4px, 4px) rotate(-1deg); }
-            40% { transform: translate(4px, -4px) rotate(1deg); }
-            60% { transform: translate(-4px, -4px) rotate(-1deg); }
-            80% { transform: translate(4px, 4px) rotate(1deg); }
-            100% { transform: translate(0, 0) rotate(0); }
-        }
-        
-        .shake {
-            animation: shakeWindow 0.15s ease-in-out;
-        }
-
     </style>
 </head>
 <body vid="9">
@@ -434,7 +421,6 @@ class KittyApp {
     constructor() {
         this.synth = null;
         this.spawnLayer = document.getElementById('spawn-layer');
-        this.appWindow = document.getElementById('app-window');
         this.playArea = document.getElementById('play-area');
         
         this.isRunning = false;
@@ -518,12 +504,6 @@ class KittyApp {
         if (!this.isRunning || e.repeat) return;
         
         this.synth.playBoing();
-        
-        
-        this.appWindow.classList.remove('shake');
-        void this.appWindow.offsetWidth; 
-        this.appWindow.classList.add('shake');
-
         this.spawnGiantCat();
     }
 

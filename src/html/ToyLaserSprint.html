@@ -93,25 +93,6 @@
         50% { transform: translate(-50%, -55%) rotate(2deg); }
     }
 
-    
-    @keyframes shake {
-        0% { transform: translate(1px, 1px) rotate(0deg); }
-        10% { transform: translate(-1px, -2px) rotate(-1deg); }
-        20% { transform: translate(-3px, 0px) rotate(1deg); }
-        30% { transform: translate(3px, 2px) rotate(0deg); }
-        40% { transform: translate(1px, -1px) rotate(1deg); }
-        50% { transform: translate(-1px, 2px) rotate(-1deg); }
-        60% { transform: translate(-3px, 1px) rotate(0deg); }
-        70% { transform: translate(3px, 1px) rotate(-1deg); }
-        80% { transform: translate(-1px, -1px) rotate(1deg); }
-        90% { transform: translate(1px, 2px) rotate(0deg); }
-        100% { transform: translate(1px, -2px) rotate(-1deg); }
-    }
-    body.shaking {
-        animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
-    }
-
-    
     .spawn {
         position: absolute;
         pointer-events: none; 
@@ -225,23 +206,6 @@
         100% { transform: translateY(0) rotate(var(--rot)) scale(1); opacity: 1; }
     }
     
-    
-    .flash {
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: var(--pink);
-        z-index: 9999;
-        pointer-events: none;
-        animation: flashAnim 0.3s ease-out forwards;
-    }
-    .flash.blue { background: var(--blue); }
-    .flash.white { background: var(--white); }
-    
-    @keyframes flashAnim {
-        0% { opacity: 0.8; mix-blend-mode: overlay; }
-        100% { opacity: 0; }
-    }
-
 </style>
 </head>
 <body vid="9">
@@ -258,11 +222,12 @@
 <script vid="15">
     const canvas = document.getElementById('canvas');
     const promptEl = document.getElementById('prompt');
-    const body = document.body;
     let zIndexCounter = 10;
     let hasInteracted = false;
     let lastMouseX = 0, lastMouseY = 0;
     let mouseThrottle = false;
+    let audioCtx;
+    let actionsUntilNextCollage = getNextCollageCountdown();
 
     
 
@@ -290,6 +255,66 @@
 
     function random(min, max) {
         return Math.random() * (max - min) + min;
+    }
+
+    function getNextCollageCountdown() {
+        return 9 + Math.floor(Math.random() * 3);
+    }
+
+    function ensureAudioContext() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        return audioCtx;
+    }
+
+    function unlockAudio() {
+        const ctx = ensureAudioContext();
+
+        if (ctx.state === 'suspended') {
+            ctx.resume().catch(() => {});
+        }
+
+        return ctx;
+    }
+
+    function playMeow() {
+        const ctx = unlockAudio();
+        const now = ctx.currentTime;
+        const masterGain = ctx.createGain();
+        const bodyOsc = ctx.createOscillator();
+        const bodyFilter = ctx.createBiquadFilter();
+        const formantOsc = ctx.createOscillator();
+        const formantGain = ctx.createGain();
+
+        masterGain.gain.setValueAtTime(0.0001, now);
+        masterGain.gain.exponentialRampToValueAtTime(0.16, now + 0.03);
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+        masterGain.connect(ctx.destination);
+
+        bodyFilter.type = 'lowpass';
+        bodyFilter.frequency.setValueAtTime(1400, now);
+        bodyOsc.type = 'triangle';
+        bodyOsc.frequency.setValueAtTime(760 + random(-40, 60), now);
+        bodyOsc.frequency.exponentialRampToValueAtTime(430 + random(-20, 40), now + 0.18);
+        bodyOsc.frequency.exponentialRampToValueAtTime(230 + random(-10, 20), now + 0.55);
+        bodyOsc.connect(bodyFilter);
+        bodyFilter.connect(masterGain);
+
+        formantOsc.type = 'sine';
+        formantOsc.frequency.setValueAtTime(1280 + random(-60, 120), now);
+        formantOsc.frequency.exponentialRampToValueAtTime(720 + random(-40, 80), now + 0.16);
+        formantGain.gain.setValueAtTime(0.0001, now);
+        formantGain.gain.exponentialRampToValueAtTime(0.05, now + 0.02);
+        formantGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+        formantOsc.connect(formantGain);
+        formantGain.connect(masterGain);
+
+        bodyOsc.start(now);
+        formantOsc.start(now);
+        bodyOsc.stop(now + 0.6);
+        formantOsc.stop(now + 0.35);
     }
 
     function removeAfter(el, time) {
@@ -343,6 +368,7 @@
     
     document.addEventListener('mousedown', (e) => {
         hidePrompt();
+        unlockAudio();
         spawnClickBurst(e.clientX, e.clientY);
     });
 
@@ -350,6 +376,7 @@
     document.addEventListener('touchstart', (e) => {
         e.preventDefault(); 
         hidePrompt();
+        unlockAudio();
         Array.from(e.touches).forEach(touch => {
             spawnClickBurst(touch.clientX, touch.clientY);
         });
@@ -391,23 +418,27 @@
         if(e.repeat) return; 
         e.preventDefault(); 
         hidePrompt();
-        
-        
-        body.classList.remove('shaking');
-        void body.offsetWidth; 
-        body.classList.add('shaking');
+        unlockAudio();
+        actionsUntilNextCollage -= 1;
 
-        
-        spawnCollage();
-
-        
-        if (Math.random() > 0.8) {
-            const flash = document.createElement('div');
-            flash.className = `flash ${['pink', 'blue', 'white'][Math.floor(Math.random()*3)]}`;
-            document.body.appendChild(flash);
-            setTimeout(() => flash.remove(), 300);
+        if (actionsUntilNextCollage <= 0) {
+            actionsUntilNextCollage = getNextCollageCountdown();
+            spawnCollage();
+            return;
         }
+
+        spawnKeyboardBurst();
     });
+
+    function spawnKeyboardBurst() {
+        const minX = 75;
+        const minY = 75;
+        const maxX = Math.max(minX, window.innerWidth - 75);
+        const maxY = Math.max(minY, window.innerHeight - 75);
+        const x = random(minX, maxX);
+        const y = random(minY, maxY);
+        spawnClickBurst(x, y);
+    }
 
     function spawnCollage() {
         const el = document.createElement('div');
@@ -430,6 +461,7 @@
         const img = document.createElement('img');
         img.src = catImages[Math.floor(Math.random() * catImages.length)];
         photoBox.appendChild(img);
+        playMeow();
 
         
         const doodle = document.createElement('div');

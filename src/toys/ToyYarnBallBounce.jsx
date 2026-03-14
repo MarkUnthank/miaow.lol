@@ -1,4 +1,4 @@
-import html from '../../sources/design-402cb9af-1191-45d8-9e72-7f8dd2eea956.html?raw';
+import html from '../html/ToyYarnBallBounce.html?raw';
 import { createToyComponent } from './createToyComponent';
 
 export const previewHtml = html;

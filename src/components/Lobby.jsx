@@ -79,6 +79,13 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
       return;
     }
 
+    console.log('[rail][lobby] setTrackScrollLeft', {
+      activeIndex,
+      activeVirtualIndex: activeVirtualIndexRef.current,
+      behavior,
+      left,
+      currentScrollLeft: track.scrollLeft,
+    });
     suppressScrollSync(behavior);
 
     if (behavior === 'auto' || behavior === 'instant') {
@@ -219,13 +226,30 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
 
     scrollFrameRef.current = requestAnimationFrame(() => {
       const track = trackRef.current;
-      if (!track || shouldIgnoreScrollSync()) {
+      const ignore = shouldIgnoreScrollSync();
+
+      if (!track || ignore) {
+        console.log('[rail][lobby] handleScroll ignored', {
+          activeIndex,
+          activeVirtualIndex: activeVirtualIndexRef.current,
+          ignore,
+          scrollLeft: track?.scrollLeft,
+        });
         return;
       }
 
       const rawClosestVirtualIndex = findClosestVirtualIndex(track);
       const centeredVirtualIndex = recenterLoopIfNeeded(track, rawClosestVirtualIndex);
       const nextLogicalIndex = wrapIndex(centeredVirtualIndex);
+
+      console.log('[rail][lobby] handleScroll sync', {
+        activeIndex,
+        activeVirtualIndex: activeVirtualIndexRef.current,
+        centeredVirtualIndex,
+        nextLogicalIndex,
+        rawClosestVirtualIndex,
+        scrollLeft: track.scrollLeft,
+      });
 
       if (centeredVirtualIndex !== activeVirtualIndexRef.current) {
         syncActiveVirtualIndex(centeredVirtualIndex);
@@ -242,6 +266,10 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
     measureTrackPadding();
     const initialVirtualIndex = getCenteredLoopIndex(experiences.length, activeIndex, LOOP_COPY_COUNT);
     syncActiveVirtualIndex(initialVirtualIndex);
+    console.log('[rail][lobby] mount centering', {
+      activeIndex,
+      initialVirtualIndex,
+    });
     scrollCardIntoView(initialVirtualIndex, 'auto');
 
     const resizeObserver = new ResizeObserver(() => {
@@ -269,6 +297,11 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
       return;
     }
 
+    console.log('[rail][lobby] prop sync', {
+      activeIndex,
+      currentVirtualIndex: activeVirtualIndexRef.current,
+      nextVirtualIndex,
+    });
     syncActiveVirtualIndex(nextVirtualIndex);
     scrollCardIntoView(nextVirtualIndex, 'auto');
   }, [activeIndex, experiences.length]);
@@ -355,7 +388,6 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
                       <span />
                       <span />
                       <span />
-                      <strong>Toy {experience.number}</strong>
                     </div>
 
                     <div className="toy-card__preview">

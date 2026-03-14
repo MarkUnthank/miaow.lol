@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { experiences, getRandomExperienceIndex, getWrappedIndex } from './experiences';
+import { experiences, getRandomExperienceIndex, getRandomExperienceNavigation, getWrappedIndex, markExperienceSeen } from './experiences';
 
 describe('experience helpers', () => {
   afterEach(() => {
@@ -23,6 +23,29 @@ describe('experience helpers', () => {
     expect(nextIndex).not.toBe(0);
     expect(nextIndex).toBeGreaterThanOrEqual(0);
     expect(nextIndex).toBeLessThan(experiences.length);
+  });
+
+  it('prefers unseen experiences before repeating any seen ones', () => {
+    const seenIndices = Array.from({ length: experiences.length - 2 }, (_, index) => index + 1);
+
+    expect(getRandomExperienceIndex(0, seenIndices)).toBe(experiences.length - 1);
+  });
+
+  it('starts a new seen cycle after every experience has been opened', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+
+    const { nextIndex, seenIndices } = getRandomExperienceNavigation(
+      0,
+      Array.from({ length: experiences.length }, (_, index) => index),
+    );
+
+    expect(nextIndex).toBe(1);
+    expect(seenIndices).toEqual([1]);
+  });
+
+  it('deduplicates seen experience tracking while preserving order', () => {
+    expect(markExperienceSeen([2, 2, 4], 2)).toEqual([2, 4]);
+    expect(markExperienceSeen([2, 4], 6)).toEqual([2, 4, 6]);
   });
 
   it('exposes stable metadata and lazy-loading hooks for every experience', () => {
