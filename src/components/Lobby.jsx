@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeftIcon, ArrowRightIcon, DieIcon, ExpandIcon } from './Icons';
+import { ArrowLeftIcon, ArrowRightIcon, DieIcon, ExpandIcon, SpeakerIcon } from './Icons';
 import { PreviewArt } from './PreviewArt';
 import { getCenteredLoopIndex, getLoopRecenterCopyShift, getNearestLoopIndex, LOOP_COPY_COUNT } from './lobbyLoop';
 
-export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexChange, onLaunch, onRandom, onToggleFullscreen }) {
+export function Lobby({ experiences, activeIndex, isFullscreen, isMuted, onActiveIndexChange, onLaunch, onRandom, onToggleFullscreen, onToggleMute }) {
   const trackRef = useRef(null);
   const cardRefs = useRef([]);
   const scrollFrameRef = useRef(0);
   const scrollSyncIgnoreUntilRef = useRef(0);
   const scrollSyncResetFrameRef = useRef(0);
   const scrollSyncResetTimerRef = useRef(0);
+  const userScrollIntentUntilRef = useRef(0);
+  const userScrollIntentResetTimerRef = useRef(0);
   const activeVirtualIndexRef = useRef(getCenteredLoopIndex(experiences.length, activeIndex));
   const [trackEdgePadding, setTrackEdgePadding] = useState(20);
   const [activeVirtualIndex, setActiveVirtualIndex] = useState(() => getCenteredLoopIndex(experiences.length, activeIndex));
@@ -26,6 +28,25 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
     }
 
     scrollSyncIgnoreUntilRef.current = 0;
+  }
+
+  function clearUserScrollIntent() {
+    if (userScrollIntentResetTimerRef.current) {
+      window.clearTimeout(userScrollIntentResetTimerRef.current);
+      userScrollIntentResetTimerRef.current = 0;
+    }
+
+    userScrollIntentUntilRef.current = 0;
+  }
+
+  function markUserScrollIntent(duration = 700) {
+    clearUserScrollIntent();
+
+    userScrollIntentUntilRef.current = Date.now() + duration;
+    userScrollIntentResetTimerRef.current = window.setTimeout(() => {
+      userScrollIntentUntilRef.current = 0;
+      userScrollIntentResetTimerRef.current = 0;
+    }, duration);
   }
 
   function suppressScrollSync(behavior = 'auto') {
@@ -53,6 +74,10 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
     return scrollSyncIgnoreUntilRef.current > Date.now();
   }
 
+  function hasUserScrollIntent() {
+    return userScrollIntentUntilRef.current > Date.now();
+  }
+
   function wrapIndex(index) {
     if (experiences.length < 1) {
       return 0;
@@ -78,14 +103,6 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
     if (!track) {
       return;
     }
-
-    console.log('[rail][lobby] setTrackScrollLeft', {
-      activeIndex,
-      activeVirtualIndex: activeVirtualIndexRef.current,
-      behavior,
-      left,
-      currentScrollLeft: track.scrollLeft,
-    });
     suppressScrollSync(behavior);
 
     if (behavior === 'auto' || behavior === 'instant') {
@@ -226,30 +243,20 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
 
     scrollFrameRef.current = requestAnimationFrame(() => {
       const track = trackRef.current;
-      const ignore = shouldIgnoreScrollSync();
-
-      if (!track || ignore) {
-        console.log('[rail][lobby] handleScroll ignored', {
-          activeIndex,
-          activeVirtualIndex: activeVirtualIndexRef.current,
-          ignore,
-          scrollLeft: track?.scrollLeft,
-        });
+      if (!track || shouldIgnoreScrollSync()) {
         return;
       }
+
+      if (!hasUserScrollIntent()) {
+        return;
+      }
+
+      // Keep the manual-scroll window alive while momentum scrolling is still producing events.
+      markUserScrollIntent(160);
 
       const rawClosestVirtualIndex = findClosestVirtualIndex(track);
       const centeredVirtualIndex = recenterLoopIfNeeded(track, rawClosestVirtualIndex);
       const nextLogicalIndex = wrapIndex(centeredVirtualIndex);
-
-      console.log('[rail][lobby] handleScroll sync', {
-        activeIndex,
-        activeVirtualIndex: activeVirtualIndexRef.current,
-        centeredVirtualIndex,
-        nextLogicalIndex,
-        rawClosestVirtualIndex,
-        scrollLeft: track.scrollLeft,
-      });
 
       if (centeredVirtualIndex !== activeVirtualIndexRef.current) {
         syncActiveVirtualIndex(centeredVirtualIndex);
@@ -266,10 +273,6 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
     measureTrackPadding();
     const initialVirtualIndex = getCenteredLoopIndex(experiences.length, activeIndex, LOOP_COPY_COUNT);
     syncActiveVirtualIndex(initialVirtualIndex);
-    console.log('[rail][lobby] mount centering', {
-      activeIndex,
-      initialVirtualIndex,
-    });
     scrollCardIntoView(initialVirtualIndex, 'auto');
 
     const resizeObserver = new ResizeObserver(() => {
@@ -286,6 +289,7 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
         cancelAnimationFrame(scrollFrameRef.current);
       }
       clearScrollSyncIgnore();
+      clearUserScrollIntent();
       resizeObserver.disconnect();
     };
   }, []);
@@ -297,11 +301,6 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
       return;
     }
 
-    console.log('[rail][lobby] prop sync', {
-      activeIndex,
-      currentVirtualIndex: activeVirtualIndexRef.current,
-      nextVirtualIndex,
-    });
     syncActiveVirtualIndex(nextVirtualIndex);
     scrollCardIntoView(nextVirtualIndex, 'auto');
   }, [activeIndex, experiences.length]);
@@ -351,7 +350,13 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
             <ArrowLeftIcon className="carousel-arrow__icon" />
           </button>
 
-          <div className="carousel-track" onScroll={handleScroll} ref={trackRef}>
+          <div
+            className="carousel-track"
+            onScroll={handleScroll}
+            onTouchStart={() => markUserScrollIntent(1600)}
+            onWheel={() => markUserScrollIntent(700)}
+            ref={trackRef}
+          >
             {loopedExperiences.map(({ copyIndex, experience, logicalIndex, virtualIndex }) => {
               const isActive = virtualIndex === activeVirtualIndex;
 
@@ -391,7 +396,7 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
                     </div>
 
                     <div className="toy-card__preview">
-                      <PreviewArt experience={experience} isActive={isActive} />
+                      <PreviewArt experience={experience} isActive={isActive} muted={isMuted} />
 
                       <button
                         aria-label={`Open ${experience.title}`}
@@ -419,6 +424,11 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
       </div>
 
       <div className="fullscreen-dock">
+        <button className="action-button action-button--dock" onClick={onToggleMute} type="button">
+          <SpeakerIcon className="action-button__icon" muted={isMuted} />
+          <span>{isMuted ? 'Unmute' : 'Mute'}</span>
+        </button>
+
         <button className={`action-button action-button--dock ${isFullscreen ? 'is-armed' : ''}`.trim()} onClick={onToggleFullscreen} type="button">
           <ExpandIcon className="action-button__icon" />
           <span>{isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}</span>

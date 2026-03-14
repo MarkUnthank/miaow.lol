@@ -7,3 +7,7 @@ export function getAppApi(targetWindow) {
 export function getFullscreenApi(targetWindow) {
   return getAppApi(targetWindow)?.fullscreen ?? null;
 }
+
+export function getAudioApi(targetWindow) {
+  return getAppApi(targetWindow)?.audio ?? null;
+}

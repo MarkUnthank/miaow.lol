@@ -10,23 +10,25 @@ function PlayerFallback({ experience }) {
   );
 }
 
-export function Player({ experience, isFullscreen, onBack, onPrevious, onRandom, onToggleFullscreen }) {
+export function Player({ experience, isFullscreen, isMuted, onBack, onPrevious, onRandom, onToggleFullscreen, onToggleMute }) {
   const ToyComponent = experience.Component;
 
   return (
     <div className="player-screen">
       <div className="player-stage">
         <Suspense fallback={<PlayerFallback experience={experience} />}>
-          <ToyComponent />
+          <ToyComponent muted={isMuted} />
         </Suspense>
       </div>
 
       <PlayerOverlay
         isFullscreen={isFullscreen}
+        isMuted={isMuted}
         onBack={onBack}
         onPrevious={onPrevious}
         onRandom={onRandom}
         onToggleFullscreen={onToggleFullscreen}
+        onToggleMute={onToggleMute}
       />
     </div>
   );

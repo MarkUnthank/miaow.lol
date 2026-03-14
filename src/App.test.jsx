@@ -41,16 +41,18 @@ vi.mock('./components/Lobby', async () => {
   const { jsx, jsxs } = await import('react/jsx-runtime');
 
   return {
-    Lobby: ({ activeIndex, isFullscreen, onLaunch, onRandom, onToggleFullscreen }) =>
+    Lobby: ({ activeIndex, isFullscreen, isMuted, onLaunch, onRandom, onToggleFullscreen, onToggleMute }) =>
       jsxs('div', {
         'data-testid': 'lobby',
         children: [
           jsx('div', { 'data-testid': 'lobby-active-index', children: String(activeIndex) }),
           jsx('div', { 'data-testid': 'lobby-fullscreen', children: String(isFullscreen) }),
+          jsx('div', { 'data-testid': 'lobby-muted', children: String(isMuted) }),
           jsx('button', { onClick: () => onLaunch(1), type: 'button', children: 'launch-second' }),
           jsx('button', { onClick: () => onLaunch(0), type: 'button', children: 'launch-first' }),
           jsx('button', { onClick: onRandom, type: 'button', children: 'random-toy' }),
           jsx('button', { onClick: onToggleFullscreen, type: 'button', children: 'toggle-lobby-fullscreen' }),
+          jsx('button', { onClick: onToggleMute, type: 'button', children: 'toggle-lobby-mute' }),
         ],
       }),
   };
@@ -60,16 +62,18 @@ vi.mock('./components/Player', async () => {
   const { jsx, jsxs } = await import('react/jsx-runtime');
 
   return {
-    Player: ({ experience, isFullscreen, onBack, onPrevious, onRandom, onToggleFullscreen }) =>
+    Player: ({ experience, isFullscreen, isMuted, onBack, onPrevious, onRandom, onToggleFullscreen, onToggleMute }) =>
       jsxs('div', {
         'data-testid': 'player',
         children: [
           jsx('div', { 'data-testid': 'player-title', children: experience.title }),
           jsx('div', { 'data-testid': 'player-fullscreen', children: String(isFullscreen) }),
+          jsx('div', { 'data-testid': 'player-muted', children: String(isMuted) }),
           jsx('button', { onClick: onBack, type: 'button', children: 'back' }),
           jsx('button', { onClick: onPrevious, type: 'button', children: 'previous' }),
           jsx('button', { onClick: onRandom, type: 'button', children: 'random' }),
           jsx('button', { onClick: onToggleFullscreen, type: 'button', children: 'toggle-player-fullscreen' }),
+          jsx('button', { onClick: onToggleMute, type: 'button', children: 'toggle-player-mute' }),
         ],
       }),
   };
@@ -185,6 +189,29 @@ describe('App', () => {
     expect(exitFullscreenMock).toHaveBeenCalledTimes(1);
     expect(window[APP_API_NAME].fullscreen.isActive()).toBe(false);
     expect(screen.getByTestId('lobby-fullscreen')).toHaveTextContent('false');
+  });
+
+  it('keeps mute state in sync across the lobby, player, and app api', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    expect(window[APP_API_NAME]?.audio).toBeDefined();
+    expect(window[APP_API_NAME].audio.isMuted()).toBe(false);
+    expect(screen.getByTestId('lobby-muted')).toHaveTextContent('false');
+
+    await user.click(screen.getByRole('button', { name: 'toggle-lobby-mute' }));
+
+    expect(window[APP_API_NAME].audio.isMuted()).toBe(true);
+    expect(screen.getByTestId('lobby-muted')).toHaveTextContent('true');
+
+    await user.click(screen.getByRole('button', { name: 'launch-second' }));
+
+    expect(screen.getByTestId('player-muted')).toHaveTextContent('true');
+
+    await user.click(screen.getByRole('button', { name: 'toggle-player-mute' }));
+
+    expect(window[APP_API_NAME].audio.isMuted()).toBe(false);
+    expect(screen.getByTestId('player-muted')).toHaveTextContent('false');
   });
 
   it('pushes in-app history and restores prior states from popstate', async () => {

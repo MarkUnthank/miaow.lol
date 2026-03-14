@@ -252,7 +252,6 @@ button {
   overflow-x: auto;
   scroll-snap-type: x proximity;
   scroll-padding-inline: var(--track-edge-padding, 1.25rem);
-  scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
   padding:
@@ -1542,6 +1541,9 @@ button {
   top: max(env(safe-area-inset-top), clamp(1.1rem, 2vw, 2rem));
   right: max(env(safe-area-inset-right), clamp(1.1rem, 2vw, 2rem));
   z-index: 4;
+  display: grid;
+  justify-items: end;
+  gap: 0.7rem;
 }
 
 .random-dock {

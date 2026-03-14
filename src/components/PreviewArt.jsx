@@ -14,7 +14,7 @@ function PreviewFallback({ experience }) {
   );
 }
 
-export function PreviewArt({ experience, isActive }) {
+export function PreviewArt({ experience, isActive, muted = false }) {
   const [previewHtml, setPreviewHtml] = useState('');
 
   useEffect(() => {
@@ -41,6 +41,7 @@ export function PreviewArt({ experience, isActive }) {
             className="experience-runtime--preview"
             html={previewHtml}
             mode="preview"
+            muted={muted}
             previewActive={isActive}
             title={`${experience.title} preview`}
           />
