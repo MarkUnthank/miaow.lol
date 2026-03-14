@@ -1,4 +1,5 @@
 import { useLayoutEffect, useMemo, useRef } from 'react';
+import { APP_API_NAME, getFullscreenApi } from '../appApi';
 
 const FONT_IMPORT_PATTERN = /@import\s+url\((['"]?)https:\/\/fonts\.googleapis\.com\/[^;]+?\);\s*/gi;
 const ROOT_SELECTOR_PATTERN = /:root\b/g;
@@ -267,6 +268,25 @@ function invokeListener(listener, context, event) {
   }
 }
 
+function assignFullscreenRequest(target, requestFullscreen) {
+  if (!target) {
+    return;
+  }
+
+  target.requestFullscreen = requestFullscreen;
+  target.webkitRequestFullscreen = requestFullscreen;
+  target.webkitRequestFullScreen = requestFullscreen;
+}
+
+function assignFullscreenExit(target, exitFullscreen) {
+  if (!target) {
+    return;
+  }
+
+  target.exitFullscreen = exitFullscreen;
+  target.webkitExitFullscreen = exitFullscreen;
+}
+
 export function ExperienceDocument({ className = '', html, mode = 'full', previewActive = false, title }) {
   const hostRef = useRef(null);
   const experience = useMemo(() => parseExperienceHtml(html, title), [html, title]);
@@ -300,6 +320,7 @@ export function ExperienceDocument({ className = '', html, mode = 'full', previe
     const WrappedWebkitAudioContext = isPreview
       ? SilentAudioContext
       : createTrackedAudioConstructor(ownerWindow.webkitAudioContext, audioContexts);
+    const fullscreenApi = isPreview ? null : getFullscreenApi(ownerWindow);
     let previewTick = 0;
 
     bodyElement.className = `toy-body ${isPreview ? 'toy-body--preview' : ''}`.trim();
@@ -310,9 +331,11 @@ export function ExperienceDocument({ className = '', html, mode = 'full', previe
     documentElement.className = `toy-document ${isPreview ? 'toy-document--preview' : ''}`.trim();
     documentElement.append(bodyElement);
 
-    if (isPreview) {
-      documentElement.requestFullscreen = () => Promise.resolve(undefined);
-    }
+    const requestAppFullscreen = () => fullscreenApi?.request?.() ?? Promise.resolve(undefined);
+    const exitAppFullscreen = () => fullscreenApi?.exit?.() ?? Promise.resolve(undefined);
+
+    assignFullscreenRequest(documentElement, isPreview ? () => Promise.resolve(undefined) : requestAppFullscreen);
+    assignFullscreenRequest(bodyElement, isPreview ? () => Promise.resolve(undefined) : requestAppFullscreen);
 
     baseStyleElement.textContent = BASE_RUNTIME_CSS;
     sourceStyleElement.textContent = experience.styles.join('\n\n');
@@ -442,13 +465,15 @@ export function ExperienceDocument({ className = '', html, mode = 'full', previe
         return queryScopedAll(shadowRoot, selector);
       },
       exitFullscreen() {
-        return ownerDocument.exitFullscreen?.();
+        return exitAppFullscreen();
       },
       fonts: ownerDocument.fonts,
       location: ownerWindow.location,
       onload: null,
       title: experience.title,
     };
+
+    assignFullscreenRequest(runtimeDocument, isPreview ? () => Promise.resolve(undefined) : requestAppFullscreen);
 
     Object.defineProperties(runtimeDocument, {
       activeElement: {
@@ -552,6 +577,15 @@ export function ExperienceDocument({ className = '', html, mode = 'full', previe
         value: runtimeWindow,
       },
     });
+
+    runtimeWindow[APP_API_NAME] = ownerWindow[APP_API_NAME] ?? null;
+    runtimeWindow.miaowApp = ownerWindow[APP_API_NAME] ?? null;
+    runtimeWindow.requestFullscreen = requestAppFullscreen;
+    runtimeWindow.webkitRequestFullscreen = requestAppFullscreen;
+    runtimeWindow.webkitRequestFullScreen = requestAppFullscreen;
+    runtimeWindow.exitFullscreen = exitAppFullscreen;
+    runtimeWindow.webkitExitFullscreen = exitAppFullscreen;
+    assignFullscreenExit(runtimeDocument, exitAppFullscreen);
 
     if (ownerWindow.matchMedia) {
       runtimeWindow.matchMedia = ownerWindow.matchMedia.bind(ownerWindow);

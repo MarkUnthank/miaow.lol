@@ -2,6 +2,7 @@ import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { Lobby } from './components/Lobby';
 import { Player } from './components/Player';
 import { experiences, getRandomExperienceIndex, getWrappedIndex } from './data/experiences';
+import { APP_API_NAME } from './appApi';
 
 const APP_HISTORY_MARKER = '__miaow';
 
@@ -72,6 +73,9 @@ function toThemeStyle(theme) {
 export default function App() {
   const appRef = useRef(null);
   const historyReadyRef = useRef(false);
+  const requestFullscreenRef = useRef(() => Promise.resolve(undefined));
+  const exitFullscreenRef = useRef(() => Promise.resolve(undefined));
+  const toggleFullscreenRef = useRef(() => Promise.resolve(undefined));
   const initialAppState = useMemo(() => getInitialAppState(), []);
   const historyStepRef = useRef(initialAppState.step);
   const [mode, setMode] = useState(initialAppState.mode);
@@ -275,6 +279,29 @@ export default function App() {
 
     await requestFullscreen();
   }
+
+  requestFullscreenRef.current = requestFullscreen;
+  exitFullscreenRef.current = exitFullscreen;
+  toggleFullscreenRef.current = togglePlayerFullscreen;
+
+  useEffect(() => {
+    const appApi = {
+      fullscreen: {
+        exit: () => exitFullscreenRef.current(),
+        isActive: () => Boolean(document.fullscreenElement),
+        request: () => requestFullscreenRef.current(),
+        toggle: () => toggleFullscreenRef.current(),
+      },
+    };
+
+    window[APP_API_NAME] = appApi;
+
+    return () => {
+      if (window[APP_API_NAME] === appApi) {
+        delete window[APP_API_NAME];
+      }
+    };
+  }, []);
 
   return (
     <main ref={appRef} className={`app-shell app-shell--${mode}`} style={toThemeStyle(themedExperience.theme)}>
