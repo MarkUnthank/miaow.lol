@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeftIcon, ArrowRightIcon, ExpandIcon, ShuffleIcon } from './Icons';
 import { PreviewArt } from './PreviewArt';
-import { getWrappedIndex } from '../data/experiences';
+import { getRandomExperienceIndex, getWrappedIndex } from '../data/experiences';
+
+const BANDIT_SPIN_DURATION_MS = 760;
+const BANDIT_REVEAL_DELAY_MS = 240;
 
 function ActionButton({ children, className = '', icon: Icon, onClick, type = 'button' }) {
   return (
@@ -19,13 +22,18 @@ export function Lobby({
   launchInFullscreen,
   onActiveIndexChange,
   onLaunch,
-  onSurprise,
   onToggleLaunchFullscreen,
 }) {
   const trackRef = useRef(null);
   const cardRefs = useRef([]);
   const scrollFrameRef = useRef(0);
+  const spinFrameRef = useRef(0);
+  const spinTimeoutRef = useRef(0);
+  const revealStartTimeoutRef = useRef(0);
+  const revealClearTimeoutRef = useRef(0);
   const [trackEdgePadding, setTrackEdgePadding] = useState(20);
+  const [isBanditSpinning, setIsBanditSpinning] = useState(false);
+  const [revealingIndex, setRevealingIndex] = useState(-1);
 
   const activeExperience = experiences[activeIndex];
   const activeTags = useMemo(() => activeExperience.tags.slice(0, 3), [activeExperience]);
@@ -58,21 +66,82 @@ export function Lobby({
     setTrackEdgePadding(nextPadding);
   }
 
-  function activateCard(index, shouldCenter = true) {
+  function clearRailFxTimers() {
+    if (spinFrameRef.current) {
+      cancelAnimationFrame(spinFrameRef.current);
+      spinFrameRef.current = 0;
+    }
+
+    window.clearTimeout(spinTimeoutRef.current);
+    window.clearTimeout(revealStartTimeoutRef.current);
+    window.clearTimeout(revealClearTimeoutRef.current);
+  }
+
+  function triggerRailFx(nextIndex) {
+    clearRailFxTimers();
+    setIsBanditSpinning(false);
+    setRevealingIndex(-1);
+
+    spinFrameRef.current = requestAnimationFrame(() => {
+      setIsBanditSpinning(true);
+
+      revealStartTimeoutRef.current = window.setTimeout(() => {
+        setRevealingIndex(nextIndex);
+      }, BANDIT_REVEAL_DELAY_MS);
+
+      spinTimeoutRef.current = window.setTimeout(() => {
+        setIsBanditSpinning(false);
+      }, BANDIT_SPIN_DURATION_MS);
+
+      revealClearTimeoutRef.current = window.setTimeout(() => {
+        setRevealingIndex(-1);
+      }, BANDIT_SPIN_DURATION_MS + 140);
+    });
+  }
+
+  function activateCard(index, { shouldCenter = true, withFx = true } = {}) {
     const nextIndex = getWrappedIndex(index);
-    onActiveIndexChange(nextIndex);
+
+    if (nextIndex === activeIndex) {
+      if (shouldCenter) {
+        scrollCardIntoView(nextIndex, withFx ? 'auto' : 'smooth');
+      }
+      return;
+    }
+
     experiences[nextIndex].preload();
+    onActiveIndexChange(nextIndex);
+
+    if (withFx) {
+      triggerRailFx(nextIndex);
+    }
 
     if (shouldCenter) {
-      scrollCardIntoView(nextIndex);
+      scrollCardIntoView(nextIndex, withFx ? 'auto' : 'smooth');
     }
   }
 
   function moveSelection(delta) {
+    if (isBanditSpinning) {
+      return;
+    }
+
     activateCard(activeIndex + delta);
   }
 
+  function handleSurpriseSelection() {
+    if (isBanditSpinning) {
+      return;
+    }
+
+    activateCard(getRandomExperienceIndex(activeIndex));
+  }
+
   function handleScroll() {
+    if (isBanditSpinning) {
+      return;
+    }
+
     if (scrollFrameRef.current) {
       cancelAnimationFrame(scrollFrameRef.current);
     }
@@ -125,6 +194,7 @@ export function Lobby({
         cancelAnimationFrame(scrollFrameRef.current);
       }
 
+      clearRailFxTimers();
       resizeObserver.disconnect();
     };
   }, []);
@@ -132,6 +202,10 @@ export function Lobby({
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.defaultPrevented || event.altKey || event.metaKey || event.ctrlKey) {
+        return;
+      }
+
+      if (isBanditSpinning) {
         return;
       }
 
@@ -156,7 +230,7 @@ export function Lobby({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [activeIndex, onLaunch]);
+  }, [activeIndex, isBanditSpinning, onLaunch]);
 
   return (
     <div className="lobby-screen">
@@ -185,7 +259,7 @@ export function Lobby({
           <ActionButton className="action-button--primary" onClick={() => onLaunch(activeIndex)}>
             Play this toy
           </ActionButton>
-          <ActionButton className="action-button--secondary" icon={ShuffleIcon} onClick={onSurprise}>
+          <ActionButton className="action-button--secondary" icon={ShuffleIcon} onClick={handleSurpriseSelection}>
             Surprise me
           </ActionButton>
         </div>
@@ -202,7 +276,7 @@ export function Lobby({
           <p className="carousel-panel__count">{activeExperience.number} / {String(experiences.length).padStart(2, '0')}</p>
         </div>
 
-        <div className="carousel-shell">
+        <div className={`carousel-shell ${isBanditSpinning ? 'is-bandit-spinning' : ''}`.trim()}>
           <button aria-label="Previous toy" className="carousel-arrow carousel-arrow--left" onClick={() => moveSelection(-1)} type="button">
             <ArrowLeftIcon className="carousel-arrow__icon" />
           </button>
@@ -214,7 +288,7 @@ export function Lobby({
               return (
                 <button
                   aria-pressed={isActive}
-                  className={`toy-card ${isActive ? 'is-active' : ''}`}
+                  className={`toy-card ${isActive ? 'is-active' : ''} ${isActive && revealingIndex === index ? 'is-revealing' : ''}`.trim()}
                   key={experience.id}
                   onClick={() => {
                     if (isActive) {
@@ -224,7 +298,13 @@ export function Lobby({
 
                     activateCard(index);
                   }}
-                  onFocus={() => activateCard(index, true)}
+                  onFocus={(event) => {
+                    if (!event.currentTarget.matches(':focus-visible')) {
+                      return;
+                    }
+
+                    activateCard(index, { shouldCenter: true, withFx: true });
+                  }}
                   onMouseEnter={() => experiences[index].preload()}
                   ref={(node) => {
                     cardRefs.current[index] = node;

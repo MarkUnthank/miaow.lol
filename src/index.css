@@ -350,6 +350,34 @@ button {
   min-width: 0;
 }
 
+.carousel-shell::after {
+  content: '';
+  position: absolute;
+  inset:
+    1rem
+    max(0.75rem, calc(var(--track-edge-padding, 1.25rem) - 0.15rem))
+    2.3rem;
+  z-index: 2;
+  border-radius: 2.05rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.24), transparent 18%, transparent 82%, rgba(255, 255, 255, 0.16)),
+    repeating-linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--theme-accent) 40%, transparent) 0 0.65rem,
+      transparent 0.65rem 1.35rem
+    );
+  mix-blend-mode: screen;
+  opacity: 0;
+  pointer-events: none;
+  filter: blur(16px);
+  background-position: 0 0, 0 0;
+  transform: none;
+}
+
+.carousel-shell.is-bandit-spinning::after {
+  animation: rail-bandit-flash 760ms cubic-bezier(0.18, 0.9, 0.22, 1) both;
+}
+
 .carousel-track {
   display: flex;
   width: 100%;
@@ -363,10 +391,16 @@ button {
     var(--track-edge-padding, 1.25rem)
     2.3rem;
   scrollbar-width: none;
+  will-change: transform, filter, opacity;
 }
 
 .carousel-track::-webkit-scrollbar {
   display: none;
+}
+
+.carousel-shell.is-bandit-spinning .carousel-track {
+  pointer-events: none;
+  animation: rail-bandit-spin 760ms cubic-bezier(0.18, 0.9, 0.22, 1) both;
 }
 
 .carousel-arrow {
@@ -411,6 +445,7 @@ button {
     transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
     background 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: center center;
 }
 
 .toy-card.is-active {
@@ -453,12 +488,14 @@ button {
 
 .toy-card__preview {
   padding-inline: 1rem;
+  will-change: transform, filter, opacity;
 }
 
 .toy-card__meta {
   display: grid;
   gap: 0.5rem;
   padding: 1rem 1.15rem 1.2rem;
+  will-change: transform, filter, opacity;
 }
 
 .toy-card__eyebrow {
@@ -478,60 +515,81 @@ button {
   line-height: 0.96;
 }
 
+.toy-card__chrome {
+  will-change: transform, filter, opacity;
+}
+
+.toy-card.is-revealing .toy-card__preview {
+  animation: rail-focus-preview-reveal 560ms cubic-bezier(0.12, 0.9, 0.2, 1) both;
+}
+
+.toy-card.is-revealing .toy-card__chrome,
+.toy-card.is-revealing .toy-card__meta {
+  animation: rail-focus-copy-reveal 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 .preview-art {
   position: relative;
   overflow: hidden;
   aspect-ratio: 16 / 9;
   border-radius: 1.35rem;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.52);
+  background: rgba(12, 14, 19, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.34);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -1px 0 rgba(32, 24, 22, 0.08);
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
   isolation: isolate;
 }
 
-.preview-art__scene,
-.preview-art__wash {
+.preview-art__runtime,
+.preview-art__vignette,
+.preview-art__scanline,
+.preview-art__fallback {
   position: absolute;
   inset: 0;
 }
 
-.preview-art__scene {
-  border-radius: inherit;
-  background: color-mix(in srgb, var(--preview-bg) 80%, white);
+.preview-art__runtime {
+  z-index: 1;
+  transform: scale(1.015);
+  transform-origin: center center;
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.preview-art__wash {
+.preview-art__runtime .experience-runtime,
+.preview-art__runtime .experience-runtime--preview {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.preview-art.is-active .preview-art__runtime {
+  transform: scale(1.035);
+}
+
+.preview-art__vignette {
   z-index: 2;
   background:
-    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.65), transparent 28%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 76%);
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 22%, transparent 78%, rgba(0, 0, 0, 0.26));
+  pointer-events: none;
 }
 
-.preview-art__badge,
-.preview-art__footer {
-  position: absolute;
+.preview-art__scanline {
   z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  padding: 0.45rem 0.7rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.84);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 14%, transparent 86%, rgba(255, 255, 255, 0.04)),
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 4px);
+  mix-blend-mode: screen;
+  opacity: 0.38;
+  pointer-events: none;
 }
 
-.preview-art__badge {
-  top: 0.9rem;
-  left: 0.9rem;
-}
-
-.preview-art__footer {
-  right: 0.9rem;
-  bottom: 0.9rem;
+.preview-art__fallback {
+  background:
+    radial-gradient(circle at 28% 28%, color-mix(in srgb, var(--preview-accent) 72%, white), transparent 28%),
+    radial-gradient(circle at 72% 70%, color-mix(in srgb, var(--preview-accent-alt) 70%, white), transparent 32%),
+    linear-gradient(160deg, color-mix(in srgb, var(--preview-panel) 82%, black) 0%, rgba(11, 14, 19, 0.96) 100%);
 }
 
 .mini {
@@ -1579,11 +1637,10 @@ button {
   inset: 0;
 }
 
-.experience-frame {
+.experience-runtime {
   display: block;
   width: 100%;
   height: 100%;
-  border: 0;
   background: #ffffff;
 }
 
@@ -2008,6 +2065,85 @@ button {
   }
 }
 
+@keyframes rail-bandit-spin {
+  0% {
+    transform: none;
+    filter: blur(0) saturate(1) brightness(1);
+    opacity: 1;
+  }
+  18% {
+    transform: none;
+    filter: blur(8px) saturate(1.05) brightness(1.02);
+    opacity: 0.94;
+  }
+  44% {
+    transform: none;
+    filter: blur(22px) saturate(1.16) brightness(1.04);
+    opacity: 0.7;
+  }
+  72% {
+    transform: none;
+    filter: blur(10px) saturate(1.08) brightness(1.02);
+    opacity: 0.88;
+  }
+  100% {
+    transform: none;
+    filter: blur(0) saturate(1) brightness(1);
+    opacity: 1;
+  }
+}
+
+@keyframes rail-bandit-flash {
+  0%,
+  100% {
+    opacity: 0;
+    background-position: 0 0, 0 -2rem;
+    transform: none;
+  }
+  22% {
+    opacity: 0.3;
+  }
+  48% {
+    opacity: 0.72;
+    background-position: 0 0, 0 6rem;
+    transform: none;
+  }
+  82% {
+    opacity: 0.22;
+    background-position: 0 0, 0 10rem;
+  }
+}
+
+@keyframes rail-focus-preview-reveal {
+  0% {
+    opacity: 0.38;
+    filter: blur(18px) saturate(1.22);
+    transform: translateY(0.9rem) scale(1.04);
+  }
+  58% {
+    opacity: 0.94;
+    filter: blur(7px) saturate(1.06);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0) saturate(1);
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes rail-focus-copy-reveal {
+  0% {
+    opacity: 0;
+    filter: blur(12px);
+    transform: translateY(0.7rem);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
 @keyframes player-enter {
   from {
     opacity: 0;
@@ -2056,5 +2192,15 @@ button {
 
   .player-overlay__actions {
     justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel-shell.is-bandit-spinning::after,
+  .carousel-shell.is-bandit-spinning .carousel-track,
+  .toy-card.is-revealing .toy-card__preview,
+  .toy-card.is-revealing .toy-card__chrome,
+  .toy-card.is-revealing .toy-card__meta {
+    animation: none;
   }
 }

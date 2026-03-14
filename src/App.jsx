@@ -1,7 +1,7 @@
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { Lobby } from './components/Lobby';
 import { Player } from './components/Player';
-import { experiences, getRandomExperienceIndex, getWrappedIndex } from './data/experiences';
+import { experiences, getWrappedIndex } from './data/experiences';
 
 function toThemeStyle(theme) {
   return {
@@ -154,7 +154,6 @@ export default function App() {
           launchInFullscreen={launchInFullscreen}
           onActiveIndexChange={setActiveIndex}
           onLaunch={openExperience}
-          onSurprise={() => openExperience(getRandomExperienceIndex(activeIndex))}
           onToggleLaunchFullscreen={toggleLobbyFullscreenPreference}
         />
       </section>

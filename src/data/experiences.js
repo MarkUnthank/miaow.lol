@@ -1,13 +1,20 @@
 import { lazy } from 'react';
 
 function createLazyToy(loader) {
-  let preloadPromise;
+  let modulePromise;
 
   return {
-    Component: lazy(loader),
+    Component: lazy(() => {
+      modulePromise ??= loader();
+      return modulePromise;
+    }),
     preload() {
-      preloadPromise ??= loader();
-      return preloadPromise;
+      modulePromise ??= loader();
+      return modulePromise;
+    },
+    loadPreviewHtml() {
+      modulePromise ??= loader();
+      return modulePromise.then((module) => module.previewHtml ?? '');
     },
   };
 }
@@ -443,6 +450,7 @@ export const experiences = definitions.map((definition, index) => {
     ...experience,
     number: String(index + 1).padStart(2, '0'),
     Component: toy.Component,
+    loadPreviewHtml: toy.loadPreviewHtml,
     preload: toy.preload,
   };
 });
