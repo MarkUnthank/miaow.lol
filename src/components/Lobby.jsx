@@ -120,6 +120,15 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
     activateCard(activeIndex + delta);
   }
 
+  function handleCardSurfaceAction(logicalIndex, virtualIndex) {
+    if (logicalIndex === activeIndex && virtualIndex === activeVirtualIndexRef.current) {
+      onLaunch(logicalIndex);
+      return;
+    }
+
+    activateCard(logicalIndex, { virtualIndex });
+  }
+
   function findClosestVirtualIndex(track) {
     const center = track.scrollLeft + track.clientWidth / 2;
     let closestIndex = activeVirtualIndexRef.current;
@@ -261,43 +270,59 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
               const isActive = virtualIndex === activeVirtualIndex;
 
               return (
-                <button
-                  aria-label={experience.title}
-                  aria-pressed={isActive}
+                <article
                   className={`toy-card ${isActive ? 'is-active' : ''}`.trim()}
                   key={`${experience.id}-${copyIndex}`}
-                  onClick={() => {
-                    if (isActive) {
-                      onLaunch(logicalIndex);
-                      return;
-                    }
-
-                    activateCard(logicalIndex, { virtualIndex });
-                  }}
-                  onFocus={(event) => {
-                    if (!event.currentTarget.matches(':focus-visible')) {
-                      return;
-                    }
-
-                    activateCard(logicalIndex, { virtualIndex });
-                  }}
+                  onClick={() => handleCardSurfaceAction(logicalIndex, virtualIndex)}
                   onMouseEnter={() => experiences[logicalIndex].preload()}
                   ref={(node) => {
                     cardRefs.current[virtualIndex] = node;
                   }}
-                  type="button"
                 >
-                  <div className="toy-card__chrome">
-                    <span />
-                    <span />
-                    <span />
-                    <strong>Toy {experience.number}</strong>
-                  </div>
+                  <button
+                    aria-label={experience.title}
+                    aria-pressed={isActive}
+                    className="toy-card__surface"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleCardSurfaceAction(logicalIndex, virtualIndex);
+                    }}
+                    onFocus={(event) => {
+                      if (!event.currentTarget.matches(':focus-visible')) {
+                        return;
+                      }
 
-                  <div className="toy-card__preview">
-                    <PreviewArt experience={experience} isActive={isActive} />
+                      activateCard(logicalIndex, { virtualIndex });
+                    }}
+                    type="button"
+                  />
+
+                  <div className="toy-card__content">
+                    <div className="toy-card__chrome">
+                      <span />
+                      <span />
+                      <span />
+                      <strong>Toy {experience.number}</strong>
+                    </div>
+
+                    <div className="toy-card__preview">
+                      <PreviewArt experience={experience} isActive={isActive} />
+
+                      <button
+                        aria-label={`Open ${experience.title}`}
+                        className="toy-card__launch"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onLaunch(logicalIndex);
+                        }}
+                        type="button"
+                      >
+                        <ArrowRightIcon className="toy-card__launch-icon" />
+                        <span>Open</span>
+                      </button>
+                    </div>
                   </div>
-                </button>
+                </article>
               );
             })}
           </div>

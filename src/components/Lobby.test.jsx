@@ -103,4 +103,24 @@ describe('Lobby', () => {
 
     expect(screen.getByTestId('active-index')).toHaveTextContent('0');
   });
+
+  it('opens an experience directly from the preview overlay button', async () => {
+    const user = userEvent.setup();
+    const onLaunch = vi.fn();
+
+    render(
+      <Lobby
+        experiences={createExperiences()}
+        activeIndex={2}
+        isFullscreen={false}
+        onActiveIndexChange={vi.fn()}
+        onLaunch={onLaunch}
+        onToggleFullscreen={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getAllByRole('button', { name: 'Open Alpha Toy' })[0]);
+
+    expect(onLaunch).toHaveBeenCalledWith(0);
+  });
 });
