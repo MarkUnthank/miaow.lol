@@ -42,6 +42,16 @@ npx wrangler dev
 
 Keep Cloudflare-specific identifiers and credentials out of the repository. Do not commit account IDs, zone IDs, route patterns, API tokens, or private bindings; set those in the Cloudflare dashboard or CI instead.
 
+GitHub Actions now handles CI and production deploys:
+
+- Pull requests run tests, a production build, and `wrangler deploy --dry-run`.
+- Pushes to `main` run the same validation, then deploy with the official Wrangler action.
+
+Set these GitHub repository secrets before relying on automated deploys:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+
 ## Project layout
 
 - `src/App.jsx` holds the app shell, history handling, and the switch between the lobby and the active toy.
