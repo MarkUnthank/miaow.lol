@@ -1,17 +1,68 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeftIcon, ArrowRightIcon, ExpandIcon } from './Icons';
 import { PreviewArt } from './PreviewArt';
-import { getWrappedIndex } from '../data/experiences';
+import { getCenteredLoopIndex, getLoopRecenterCopyShift, getNearestLoopIndex, LOOP_COPY_COUNT } from './lobbyLoop';
 
 export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexChange, onLaunch, onToggleFullscreen }) {
   const trackRef = useRef(null);
   const cardRefs = useRef([]);
   const scrollFrameRef = useRef(0);
+  const activeVirtualIndexRef = useRef(getCenteredLoopIndex(experiences.length, activeIndex));
   const [trackEdgePadding, setTrackEdgePadding] = useState(20);
+  const [activeVirtualIndex, setActiveVirtualIndex] = useState(() => getCenteredLoopIndex(experiences.length, activeIndex));
 
-  function scrollCardIntoView(index, behavior = 'smooth') {
+  function wrapIndex(index) {
+    if (experiences.length < 1) {
+      return 0;
+    }
+
+    return ((index % experiences.length) + experiences.length) % experiences.length;
+  }
+
+  const loopedExperiences = useMemo(
+    () =>
+      Array.from({ length: LOOP_COPY_COUNT }, (_, copyIndex) =>
+        experiences.map((experience, logicalIndex) => ({
+          copyIndex,
+          experience,
+          logicalIndex,
+          virtualIndex: copyIndex * experiences.length + logicalIndex,
+        })),
+      ).flat(),
+    [experiences],
+  );
+
+  function setTrackScrollLeft(track, left, behavior = 'auto') {
+    if (!track) {
+      return;
+    }
+
+    if (typeof track.scrollTo === 'function') {
+      track.scrollTo({ left, behavior });
+      return;
+    }
+
+    track.scrollLeft = left;
+  }
+
+  function getLoopSegmentWidth() {
+    if (experiences.length < 1) {
+      return 0;
+    }
+
+    const firstCard = cardRefs.current[0];
+    const nextCopyFirstCard = cardRefs.current[experiences.length];
+
+    if (!firstCard || !nextCopyFirstCard) {
+      return 0;
+    }
+
+    return nextCopyFirstCard.offsetLeft - firstCard.offsetLeft;
+  }
+
+  function scrollCardIntoView(virtualIndex, behavior = 'smooth') {
     const track = trackRef.current;
-    const card = cardRefs.current[index];
+    const card = cardRefs.current[virtualIndex];
 
     if (!track || !card) {
       return;
@@ -19,10 +70,7 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
 
     const targetLeft = card.offsetLeft - (track.clientWidth - card.clientWidth) / 2;
 
-    track.scrollTo({
-      left: Math.max(0, targetLeft),
-      behavior,
-    });
+    setTrackScrollLeft(track, Math.max(0, targetLeft), behavior);
   }
 
   function measureTrackPadding() {
@@ -37,26 +85,73 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
     setTrackEdgePadding(nextPadding);
   }
 
-  function activateCard(index, { shouldCenter = true, behavior = 'smooth' } = {}) {
-    const nextIndex = getWrappedIndex(index);
+  function syncActiveVirtualIndex(nextVirtualIndex) {
+    activeVirtualIndexRef.current = nextVirtualIndex;
+    setActiveVirtualIndex(nextVirtualIndex);
+  }
 
-    if (nextIndex === activeIndex) {
+  function activateCard(index, { behavior = 'smooth', shouldCenter = true, virtualIndex } = {}) {
+    const nextIndex = wrapIndex(index);
+    const nextVirtualIndex =
+      virtualIndex ?? getNearestLoopIndex(experiences.length, nextIndex, activeVirtualIndexRef.current, LOOP_COPY_COUNT);
+
+    if (nextIndex === activeIndex && nextVirtualIndex === activeVirtualIndexRef.current) {
       if (shouldCenter) {
-        scrollCardIntoView(nextIndex, behavior);
+        scrollCardIntoView(nextVirtualIndex, behavior);
       }
       return;
     }
 
     experiences[nextIndex].preload();
+    syncActiveVirtualIndex(nextVirtualIndex);
     onActiveIndexChange(nextIndex);
 
     if (shouldCenter) {
-      scrollCardIntoView(nextIndex, behavior);
+      scrollCardIntoView(nextVirtualIndex, behavior);
     }
   }
 
   function moveSelection(delta) {
     activateCard(activeIndex + delta);
+  }
+
+  function findClosestVirtualIndex(track) {
+    const center = track.scrollLeft + track.clientWidth / 2;
+    let closestIndex = activeVirtualIndexRef.current;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    cardRefs.current.forEach((card, index) => {
+      if (!card) {
+        return;
+      }
+
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+      const distance = Math.abs(center - cardCenter);
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    return closestIndex;
+  }
+
+  function recenterLoopIfNeeded(track, closestVirtualIndex) {
+    const copyShift = getLoopRecenterCopyShift(experiences.length, closestVirtualIndex, LOOP_COPY_COUNT);
+
+    if (!copyShift) {
+      return closestVirtualIndex;
+    }
+
+    const loopSegmentWidth = getLoopSegmentWidth();
+
+    if (!loopSegmentWidth) {
+      return closestVirtualIndex;
+    }
+
+    track.scrollLeft += loopSegmentWidth * copyShift;
+    return closestVirtualIndex + experiences.length * copyShift;
   }
 
   function handleScroll() {
@@ -70,37 +165,30 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
         return;
       }
 
-      const center = track.scrollLeft + track.clientWidth / 2;
-      let closestIndex = activeIndex;
-      let closestDistance = Number.POSITIVE_INFINITY;
+      const rawClosestVirtualIndex = findClosestVirtualIndex(track);
+      const centeredVirtualIndex = recenterLoopIfNeeded(track, rawClosestVirtualIndex);
+      const nextLogicalIndex = wrapIndex(centeredVirtualIndex);
 
-      cardRefs.current.forEach((card, index) => {
-        if (!card) {
-          return;
-        }
+      if (centeredVirtualIndex !== activeVirtualIndexRef.current) {
+        syncActiveVirtualIndex(centeredVirtualIndex);
+      }
 
-        const cardCenter = card.offsetLeft + card.offsetWidth / 2;
-        const distance = Math.abs(center - cardCenter);
-
-        if (distance < closestDistance) {
-          closestDistance = distance;
-          closestIndex = index;
-        }
-      });
-
-      if (closestIndex !== activeIndex) {
-        onActiveIndexChange(closestIndex);
-        experiences[closestIndex].preload();
+      if (nextLogicalIndex !== activeIndex) {
+        onActiveIndexChange(nextLogicalIndex);
+        experiences[nextLogicalIndex].preload();
       }
     });
   }
 
   useEffect(() => {
     measureTrackPadding();
-    scrollCardIntoView(activeIndex, 'auto');
+    const initialVirtualIndex = getCenteredLoopIndex(experiences.length, activeIndex, LOOP_COPY_COUNT);
+    syncActiveVirtualIndex(initialVirtualIndex);
+    scrollCardIntoView(initialVirtualIndex, 'auto');
 
     const resizeObserver = new ResizeObserver(() => {
       measureTrackPadding();
+      scrollCardIntoView(activeVirtualIndexRef.current, 'auto');
     });
 
     if (trackRef.current) {
@@ -114,6 +202,17 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
       resizeObserver.disconnect();
     };
   }, []);
+
+  useEffect(() => {
+    const nextVirtualIndex = getNearestLoopIndex(experiences.length, activeIndex, activeVirtualIndexRef.current, LOOP_COPY_COUNT);
+
+    if (nextVirtualIndex === activeVirtualIndexRef.current) {
+      return;
+    }
+
+    syncActiveVirtualIndex(nextVirtualIndex);
+    scrollCardIntoView(nextVirtualIndex, 'auto');
+  }, [activeIndex, experiences.length]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -133,7 +232,7 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
 
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        onLaunch(activeIndex);
+        onLaunch(wrapIndex(activeVirtualIndexRef.current));
       }
     };
 
@@ -153,32 +252,32 @@ export function Lobby({ experiences, activeIndex, isFullscreen, onActiveIndexCha
           </button>
 
           <div className="carousel-track" onScroll={handleScroll} ref={trackRef}>
-            {experiences.map((experience, index) => {
-              const isActive = index === activeIndex;
+            {loopedExperiences.map(({ copyIndex, experience, logicalIndex, virtualIndex }) => {
+              const isActive = virtualIndex === activeVirtualIndex;
 
               return (
                 <button
                   aria-pressed={isActive}
                   className={`toy-card ${isActive ? 'is-active' : ''}`.trim()}
-                  key={experience.id}
+                  key={`${experience.id}-${copyIndex}`}
                   onClick={() => {
                     if (isActive) {
-                      onLaunch(index);
+                      onLaunch(logicalIndex);
                       return;
                     }
 
-                    activateCard(index);
+                    activateCard(logicalIndex, { virtualIndex });
                   }}
                   onFocus={(event) => {
                     if (!event.currentTarget.matches(':focus-visible')) {
                       return;
                     }
 
-                    activateCard(index);
+                    activateCard(logicalIndex, { virtualIndex });
                   }}
-                  onMouseEnter={() => experiences[index].preload()}
+                  onMouseEnter={() => experiences[logicalIndex].preload()}
                   ref={(node) => {
-                    cardRefs.current[index] = node;
+                    cardRefs.current[virtualIndex] = node;
                   }}
                   type="button"
                 >
