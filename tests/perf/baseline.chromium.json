@@ -1,0 +1,88 @@
+{
+  "browser": {
+    "headless": true,
+    "name": "chromium",
+    "version": "145.0.7632.6"
+  },
+  "build": {
+    "gitCommit": "0465006"
+  },
+  "config": {
+    "measuredRuns": 3,
+    "warmupRuns": 1
+  },
+  "generatedAt": "2026-03-16T16:05:22.710Z",
+  "scenarios": [
+    {
+      "label": "Lobby carousel",
+      "name": "lobby",
+      "path": "/",
+      "summary": {
+        "chrome": {
+          "scriptDurationMs": 179.496,
+          "layoutDurationMs": 111.33999999999999,
+          "recalcStyleDurationMs": 1266.48,
+          "taskDurationMs": 2664.9360000000006,
+          "jsHeapUsedSizeBytes": 10710444,
+          "jsHeapTotalSizeBytes": 25526272,
+          "nodes": 14199
+        },
+        "frame": {
+          "approxFps": 16.58649859014762,
+          "p95FrameTimeMs": 100,
+          "longTaskCount": 1,
+          "longTaskDurationMs": 50
+        },
+        "navigation": {
+          "pageReadyMs": 2257.5,
+          "domContentLoadedMs": 98.60000002384186,
+          "loadEventMs": 100.19999998807907
+        },
+        "structural": {
+          "livePreviewRuntimeCount": 75,
+          "loadedToyChunkCount": 15,
+          "loadedToyChunkBytes": 260062,
+          "domNodeCount": 1384
+        }
+      }
+    },
+    {
+      "label": "Cat Mash Chaos",
+      "name": "cat-mash-chaos",
+      "path": "/cat-mash-chaos/",
+      "summary": {
+        "chrome": {
+          "scriptDurationMs": 133.238,
+          "layoutDurationMs": 75.00300000000004,
+          "recalcStyleDurationMs": 678.458,
+          "taskDurationMs": 2216.435,
+          "jsHeapUsedSizeBytes": 8973428,
+          "jsHeapTotalSizeBytes": 18972672,
+          "nodes": 13125
+        },
+        "frame": {
+          "approxFps": 42.55646422436999,
+          "p95FrameTimeMs": 41.70000000000027,
+          "longTaskCount": 0,
+          "longTaskDurationMs": 0
+        },
+        "navigation": {
+          "pageReadyMs": 2800.300000011921,
+          "domContentLoadedMs": 100.60000002384186,
+          "loadEventMs": 102.19999998807907
+        },
+        "structural": {
+          "livePreviewRuntimeCount": 75,
+          "loadedToyChunkCount": 15,
+          "loadedToyChunkBytes": 260062,
+          "domNodeCount": 1426
+        }
+      }
+    }
+  ],
+  "viewport": {
+    "deviceScaleFactor": 1,
+    "height": 900,
+    "width": 1440
+  }
+}

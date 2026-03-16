@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "perf:install": "playwright install chromium",
+    "perf:profile": "npm run build && node tests/perf/run.mjs",
+    "perf:baseline": "npm run build && node tests/perf/run.mjs --update-baseline",
     "cf:login": "wrangler login",
     "cf:whoami": "wrangler whoami",
     "cf:check": "npm run build && wrangler deploy --dry-run",
@@ -24,6 +27,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@vitejs/plugin-react": "^4.3.4",
     "jsdom": "^27.0.1",
+    "playwright": "^1.56.1",
     "vite": "^5.4.11",
     "vitest": "^3.2.4",
     "wrangler": "^4.73.0"
