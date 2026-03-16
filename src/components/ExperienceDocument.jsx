@@ -406,7 +406,78 @@ function assignFullscreenExit(target, exitFullscreen) {
   target.webkitExitFullscreen = exitFullscreen;
 }
 
-export function ExperienceDocument({ className = '', html, mode = 'full', muted = false, previewActive = false, title }) {
+function createAnimationFrameScheduler(ownerWindow, fpsCap) {
+  const pendingFrames = new Map();
+  const minimumFrameDuration = Number.isFinite(fpsCap) && fpsCap > 0 ? 1000 / fpsCap : 0;
+  let hostFrameId = 0;
+  let lastDeliveredTimestamp = null;
+  let nextFrameId = 1;
+
+  function cancelHostFrameIfIdle() {
+    if (!hostFrameId || pendingFrames.size > 0) {
+      return;
+    }
+
+    ownerWindow.cancelAnimationFrame(hostFrameId);
+    hostFrameId = 0;
+  }
+
+  function pump(timestamp) {
+    hostFrameId = 0;
+
+    if (pendingFrames.size < 1) {
+      return;
+    }
+
+    if (minimumFrameDuration > 0 && lastDeliveredTimestamp !== null && timestamp - lastDeliveredTimestamp + 0.5 < minimumFrameDuration) {
+      hostFrameId = ownerWindow.requestAnimationFrame(pump);
+      return;
+    }
+
+    lastDeliveredTimestamp = timestamp;
+    const callbacks = Array.from(pendingFrames.entries());
+    pendingFrames.clear();
+
+    callbacks.forEach(([, callback]) => {
+      callback(timestamp);
+    });
+
+    if (pendingFrames.size > 0 && !hostFrameId) {
+      hostFrameId = ownerWindow.requestAnimationFrame(pump);
+    }
+  }
+
+  return {
+    cancelAnimationFrame(frameId) {
+      pendingFrames.delete(frameId);
+      cancelHostFrameIfIdle();
+    },
+    dispose() {
+      pendingFrames.clear();
+
+      if (!hostFrameId) {
+        return;
+      }
+
+      ownerWindow.cancelAnimationFrame(hostFrameId);
+      hostFrameId = 0;
+    },
+    requestAnimationFrame(callback) {
+      const frameId = nextFrameId;
+      nextFrameId += 1;
+
+      pendingFrames.set(frameId, callback);
+
+      if (!hostFrameId) {
+        hostFrameId = ownerWindow.requestAnimationFrame(pump);
+      }
+
+      return frameId;
+    },
+  };
+}
+
+export function ExperienceDocument({ className = '', fpsCap, html, mode = 'full', muted = false, title }) {
   const hostRef = useRef(null);
   const audioContextsRef = useRef(new Set());
   const audioElementsRef = useRef(new Set());
@@ -440,7 +511,6 @@ export function ExperienceDocument({ className = '', html, mode = 'full', muted 
     const resizeEntries = [];
     const timeoutIds = new Set();
     const intervalIds = new Set();
-    const frameIds = new Set();
     const audioContexts = new Set();
     const audioElements = new Set();
     const mutedAudioContexts = new Set();
@@ -479,6 +549,7 @@ export function ExperienceDocument({ className = '', html, mode = 'full', muted 
       },
     };
     const runtimeAppApi = isPreview ? previewAppApi : ownerWindow[APP_API_NAME] ?? null;
+    const animationFrameScheduler = createAnimationFrameScheduler(ownerWindow, fpsCap);
     let previewTick = 0;
 
     bodyElement.className = `toy-body ${isPreview ? 'toy-body--preview' : ''}`.trim();
@@ -806,19 +877,9 @@ export function ExperienceDocument({ className = '', html, mode = 'full', muted 
       ownerWindow.clearInterval(intervalId);
     };
 
-    runtimeWindow.requestAnimationFrame = (callback) => {
-      const frameId = ownerWindow.requestAnimationFrame((timestamp) => {
-        frameIds.delete(frameId);
-        callback(timestamp);
-      });
-
-      frameIds.add(frameId);
-      return frameId;
-    };
-
+    runtimeWindow.requestAnimationFrame = (callback) => animationFrameScheduler.requestAnimationFrame(callback);
     runtimeWindow.cancelAnimationFrame = (frameId) => {
-      frameIds.delete(frameId);
-      ownerWindow.cancelAnimationFrame(frameId);
+      animationFrameScheduler.cancelAnimationFrame(frameId);
     };
 
     runtimeWindow.getComputedStyle = ownerWindow.getComputedStyle.bind(ownerWindow);
@@ -992,9 +1053,7 @@ export function ExperienceDocument({ className = '', html, mode = 'full', muted 
         }
       }, 420);
 
-      if (previewActive) {
-        runtimeWindow.setInterval(drivePreview, 1400);
-      }
+      runtimeWindow.setInterval(drivePreview, 1400);
     }
 
     return () => {
@@ -1019,7 +1078,7 @@ export function ExperienceDocument({ className = '', html, mode = 'full', muted 
 
       timeoutIds.forEach((timeoutId) => ownerWindow.clearTimeout(timeoutId));
       intervalIds.forEach((intervalId) => ownerWindow.clearInterval(intervalId));
-      frameIds.forEach((frameId) => ownerWindow.cancelAnimationFrame(frameId));
+      animationFrameScheduler.dispose();
 
       audioContexts.forEach((audioContext) => {
         if (audioContext && typeof audioContext.close === 'function' && audioContext.state !== 'closed') {
@@ -1038,7 +1097,7 @@ export function ExperienceDocument({ className = '', html, mode = 'full', muted 
 
       shadowRoot.replaceChildren();
     };
-  }, [experience, isPreview, previewActive]);
+  }, [experience, fpsCap, isPreview]);
 
   return <div className={`experience-runtime ${className}`.trim()} ref={hostRef} />;
 }

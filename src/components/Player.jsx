@@ -17,7 +17,7 @@ export function Player({ experience, isFullscreen, isMuted, onBack, onPrevious, 
     <div className="player-screen">
       <div className="player-stage">
         <Suspense fallback={<PlayerFallback experience={experience} />}>
-          <ToyComponent muted={isMuted} />
+          <ToyComponent fpsCap={60} muted={isMuted} />
         </Suspense>
       </div>
 

@@ -5,6 +5,10 @@ import { getCenteredLoopIndex, getLoopRecenterCopyShift, getNearestLoopIndex, LO
 import { SITE_AUTHOR_URL } from '../siteConfig';
 
 const GITHUB_REPO_URL = 'https://github.com/MarkUnthank/miaow.lol';
+const SIBLING_PREVIEW_ENABLE_FPS = 38;
+const SIBLING_PREVIEW_DISABLE_FPS = 32;
+const SIBLING_PREVIEW_SAMPLE_WINDOW_MS = 3000;
+const SIBLING_PREVIEW_STABILITY_WINDOW_MS = 3000;
 
 export function Lobby({ experiences, activeIndex, isFullscreen, isMuted, onActiveIndexChange, onLaunch, onRandom, onToggleFullscreen, onToggleMute }) {
   const trackRef = useRef(null);
@@ -16,8 +20,10 @@ export function Lobby({ experiences, activeIndex, isFullscreen, isMuted, onActiv
   const userScrollIntentUntilRef = useRef(0);
   const userScrollIntentResetTimerRef = useRef(0);
   const activeVirtualIndexRef = useRef(getCenteredLoopIndex(experiences.length, activeIndex));
+  const siblingPreviewsEnabledRef = useRef(false);
   const [trackEdgePadding, setTrackEdgePadding] = useState(20);
   const [activeVirtualIndex, setActiveVirtualIndex] = useState(() => getCenteredLoopIndex(experiences.length, activeIndex));
+  const [siblingPreviewsEnabled, setSiblingPreviewsEnabled] = useState(false);
 
   function clearScrollSyncIgnore() {
     if (scrollSyncResetFrameRef.current) {
@@ -101,6 +107,26 @@ export function Lobby({ experiences, activeIndex, isFullscreen, isMuted, onActiv
       ).flat(),
     [experiences],
   );
+
+  const livePreviewVirtualIndexes = useMemo(() => {
+    const nextLivePreviewVirtualIndexes = new Set([activeVirtualIndex]);
+
+    if (siblingPreviewsEnabled && experiences.length > 1) {
+      nextLivePreviewVirtualIndexes.add(activeVirtualIndex - 1);
+      nextLivePreviewVirtualIndexes.add(activeVirtualIndex + 1);
+    }
+
+    return nextLivePreviewVirtualIndexes;
+  }, [activeVirtualIndex, experiences.length, siblingPreviewsEnabled]);
+
+  function syncSiblingPreviewsEnabled(nextValue) {
+    if (siblingPreviewsEnabledRef.current === nextValue) {
+      return;
+    }
+
+    siblingPreviewsEnabledRef.current = nextValue;
+    setSiblingPreviewsEnabled(nextValue);
+  }
 
   function setTrackScrollLeft(track, left, behavior = 'auto') {
     if (!track) {
@@ -309,6 +335,65 @@ export function Lobby({ experiences, activeIndex, isFullscreen, isMuted, onActiv
   }, [activeIndex, experiences.length]);
 
   useEffect(() => {
+    if (experiences.length < 2) {
+      syncSiblingPreviewsEnabled(false);
+      return undefined;
+    }
+
+    let frameId = 0;
+    let healthySince = null;
+    let unhealthySince = null;
+    const frameTimestamps = [];
+
+    const measureFrame = (timestamp) => {
+      frameTimestamps.push(timestamp);
+
+      while (frameTimestamps.length > 0 && frameTimestamps[0] < timestamp - SIBLING_PREVIEW_SAMPLE_WINDOW_MS) {
+        frameTimestamps.shift();
+      }
+
+      if (frameTimestamps.length > 1) {
+        const sampleDurationMs = frameTimestamps[frameTimestamps.length - 1] - frameTimestamps[0];
+        const approxFps = sampleDurationMs > 0 ? ((frameTimestamps.length - 1) * 1000) / sampleDurationMs : 0;
+
+        if (siblingPreviewsEnabledRef.current) {
+          if (approxFps <= SIBLING_PREVIEW_DISABLE_FPS) {
+            unhealthySince ??= timestamp;
+
+            if (timestamp - unhealthySince >= SIBLING_PREVIEW_STABILITY_WINDOW_MS) {
+              syncSiblingPreviewsEnabled(false);
+              unhealthySince = null;
+            }
+          } else {
+            unhealthySince = null;
+          }
+        } else if (approxFps >= SIBLING_PREVIEW_ENABLE_FPS) {
+          healthySince ??= timestamp;
+
+          if (timestamp - healthySince >= SIBLING_PREVIEW_STABILITY_WINDOW_MS) {
+            syncSiblingPreviewsEnabled(true);
+            healthySince = null;
+          }
+        } else {
+          healthySince = null;
+        }
+      }
+
+      frameId = window.requestAnimationFrame(measureFrame);
+    };
+
+    frameId = window.requestAnimationFrame(measureFrame);
+
+    return () => {
+      siblingPreviewsEnabledRef.current = false;
+
+      if (frameId) {
+        window.cancelAnimationFrame(frameId);
+      }
+    };
+  }, [experiences.length]);
+
+  useEffect(() => {
     if (!trackRef.current) {
       return;
     }
@@ -362,6 +447,7 @@ export function Lobby({ experiences, activeIndex, isFullscreen, isMuted, onActiv
           >
             {loopedExperiences.map(({ copyIndex, experience, logicalIndex, virtualIndex }) => {
               const isActive = virtualIndex === activeVirtualIndex;
+              const isLivePreview = livePreviewVirtualIndexes.has(virtualIndex);
 
               return (
                 <article
@@ -399,7 +485,7 @@ export function Lobby({ experiences, activeIndex, isFullscreen, isMuted, onActiv
                     </div>
 
                     <div className="toy-card__preview">
-                      <PreviewArt experience={experience} isActive={isActive} muted={isMuted} />
+                      <PreviewArt experience={experience} isActive={isActive} isLive={isLivePreview} muted={isMuted} />
 
                       <button
                         aria-label={`Open ${experience.title}`}

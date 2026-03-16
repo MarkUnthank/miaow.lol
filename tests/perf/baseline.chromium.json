@@ -5,13 +5,13 @@
     "version": "145.0.7632.6"
   },
   "build": {
-    "gitCommit": "0465006"
+    "gitCommit": "2bcdb48"
   },
   "config": {
     "measuredRuns": 3,
     "warmupRuns": 1
   },
-  "generatedAt": "2026-03-16T16:05:22.710Z",
+  "generatedAt": "2026-03-16T16:32:31.643Z",
   "scenarios": [
     {
       "label": "Lobby carousel",
@@ -19,30 +19,29 @@
       "path": "/",
       "summary": {
         "chrome": {
-          "scriptDurationMs": 179.496,
-          "layoutDurationMs": 111.33999999999999,
-          "recalcStyleDurationMs": 1266.48,
-          "taskDurationMs": 2664.9360000000006,
-          "jsHeapUsedSizeBytes": 10710444,
-          "jsHeapTotalSizeBytes": 25526272,
-          "nodes": 14199
+          "scriptDurationMs": 39.355000000000004,
+          "layoutDurationMs": 33.132000000000005,
+          "recalcStyleDurationMs": 105.20599999999999,
+          "taskDurationMs": 337.255,
+          "jsHeapUsedSizeBytes": 7105964,
+          "jsHeapTotalSizeBytes": 14254080
         },
         "frame": {
-          "approxFps": 16.58649859014762,
-          "p95FrameTimeMs": 100,
-          "longTaskCount": 1,
-          "longTaskDurationMs": 50
+          "approxFps": 26.323116251993216,
+          "p95FrameTimeMs": 66.70000000000027,
+          "longTaskCount": 0,
+          "longTaskDurationMs": 0
         },
         "navigation": {
-          "pageReadyMs": 2257.5,
-          "domContentLoadedMs": 98.60000002384186,
-          "loadEventMs": 100.19999998807907
+          "pageReadyMs": 2077.699999988079,
+          "domContentLoadedMs": 107.30000001192093,
+          "loadEventMs": 108.5
         },
         "structural": {
-          "livePreviewRuntimeCount": 75,
-          "loadedToyChunkCount": 15,
-          "loadedToyChunkBytes": 260062,
-          "domNodeCount": 1384
+          "livePreviewRuntimeCount": 1,
+          "loadedToyChunkCount": 8,
+          "loadedToyChunkBytes": 138965,
+          "domNodeCount": 1377
         }
       }
     },
@@ -52,30 +51,29 @@
       "path": "/cat-mash-chaos/",
       "summary": {
         "chrome": {
-          "scriptDurationMs": 133.238,
-          "layoutDurationMs": 75.00300000000004,
-          "recalcStyleDurationMs": 678.458,
-          "taskDurationMs": 2216.435,
-          "jsHeapUsedSizeBytes": 8973428,
-          "jsHeapTotalSizeBytes": 18972672,
-          "nodes": 13125
+          "scriptDurationMs": 24.553000000000004,
+          "layoutDurationMs": 0.03500000000000031,
+          "recalcStyleDurationMs": 7.692000000000001,
+          "taskDurationMs": 490.66900000000004,
+          "jsHeapUsedSizeBytes": 6913916,
+          "jsHeapTotalSizeBytes": 9535488
         },
         "frame": {
-          "approxFps": 42.55646422436999,
-          "p95FrameTimeMs": 41.70000000000027,
+          "approxFps": 58.606773118090906,
+          "p95FrameTimeMs": 25.800000000000182,
           "longTaskCount": 0,
           "longTaskDurationMs": 0
         },
         "navigation": {
-          "pageReadyMs": 2800.300000011921,
-          "domContentLoadedMs": 100.60000002384186,
-          "loadEventMs": 102.19999998807907
+          "pageReadyMs": 2418.399999976158,
+          "domContentLoadedMs": 122.69999998807907,
+          "loadEventMs": 124.39999997615814
         },
         "structural": {
-          "livePreviewRuntimeCount": 75,
-          "loadedToyChunkCount": 15,
-          "loadedToyChunkBytes": 260062,
-          "domNodeCount": 1426
+          "livePreviewRuntimeCount": 0,
+          "loadedToyChunkCount": 3,
+          "loadedToyChunkBytes": 54490,
+          "domNodeCount": 95
         }
       }
     }

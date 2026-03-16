@@ -6,7 +6,9 @@ import { Lobby } from './Lobby';
 import { getCenteredLoopIndex, LOOP_COPY_COUNT } from './lobbyLoop';
 
 vi.mock('./PreviewArt', () => ({
-  PreviewArt: ({ experience }) => <div data-testid={`preview-${experience.id}`} />,
+  PreviewArt: ({ experience, isActive, isLive }) => (
+    <div data-active={String(isActive)} data-live={String(isLive)} data-testid={`preview-${experience.id}`} />
+  ),
 }));
 
 const theme = {
@@ -65,6 +67,61 @@ function getCenteredScrollLeft(track, card) {
   return card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2;
 }
 
+function installMockAnimationFrame() {
+  let now = 0;
+  let nextFrameId = 1;
+  const pendingCallbacks = new Map();
+  const originalRequestAnimationFrame = window.requestAnimationFrame;
+  const originalCancelAnimationFrame = window.cancelAnimationFrame;
+
+  Object.defineProperty(window, 'requestAnimationFrame', {
+    configurable: true,
+    value: (callback) => {
+      const frameId = nextFrameId;
+      nextFrameId += 1;
+      pendingCallbacks.set(frameId, callback);
+      return frameId;
+    },
+    writable: true,
+  });
+
+  Object.defineProperty(window, 'cancelAnimationFrame', {
+    configurable: true,
+    value: (frameId) => {
+      pendingCallbacks.delete(frameId);
+    },
+    writable: true,
+  });
+
+  return {
+    flushFrames(frameCount, frameDurationMs) {
+      for (let frameIndex = 0; frameIndex < frameCount; frameIndex += 1) {
+        if (pendingCallbacks.size < 1) {
+          break;
+        }
+
+        now += frameDurationMs;
+        const callbacks = Array.from(pendingCallbacks.values());
+        pendingCallbacks.clear();
+        callbacks.forEach((callback) => callback(now));
+      }
+    },
+    restore() {
+      Object.defineProperty(window, 'requestAnimationFrame', {
+        configurable: true,
+        value: originalRequestAnimationFrame,
+        writable: true,
+      });
+
+      Object.defineProperty(window, 'cancelAnimationFrame', {
+        configurable: true,
+        value: originalCancelAnimationFrame,
+        writable: true,
+      });
+    },
+  };
+}
+
 describe('Lobby', () => {
   it('centers the initial loop position without using smooth scroll animation', () => {
     const scrollToSpy = vi.fn();
@@ -92,6 +149,8 @@ describe('Lobby', () => {
 
   it('ignores mount-time scroll events while the rail is centering itself', () => {
     vi.useFakeTimers();
+    const requestAnimationFrameSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0);
+    const cancelAnimationFrameSpy = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
 
     try {
       const onActiveIndexChange = vi.fn();
@@ -112,12 +171,16 @@ describe('Lobby', () => {
 
       expect(onActiveIndexChange).not.toHaveBeenCalled();
     } finally {
+      requestAnimationFrameSpy.mockRestore();
+      cancelAnimationFrameSpy.mockRestore();
       vi.useRealTimers();
     }
   });
 
   it('ignores delayed scroll events that were not preceded by user input', () => {
     vi.useFakeTimers();
+    const requestAnimationFrameSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0);
+    const cancelAnimationFrameSpy = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
 
     try {
       const onActiveIndexChange = vi.fn();
@@ -149,12 +212,14 @@ describe('Lobby', () => {
 
       expect(onActiveIndexChange).not.toHaveBeenCalled();
     } finally {
+      requestAnimationFrameSpy.mockRestore();
+      cancelAnimationFrameSpy.mockRestore();
       vi.useRealTimers();
     }
   });
 
   it('renders repeated experience copies for a continuous rail', () => {
-    render(
+    const { container } = render(
       <Lobby
         experiences={createExperiences()}
         activeIndex={0}
@@ -169,6 +234,42 @@ describe('Lobby', () => {
     expect(screen.getAllByRole('button', { name: 'Alpha Toy' })).toHaveLength(LOOP_COPY_COUNT);
     expect(screen.getAllByRole('button', { name: 'Beta Toy' })).toHaveLength(LOOP_COPY_COUNT);
     expect(screen.getAllByRole('button', { name: 'Gamma Toy' })).toHaveLength(LOOP_COPY_COUNT);
+    expect(container.querySelectorAll('[data-active="true"]')).toHaveLength(1);
+    expect(container.querySelectorAll('[data-live="true"]')).toHaveLength(1);
+  });
+
+  it('promotes sibling previews after sustained healthy fps and disables them again after sustained low fps', () => {
+    const animationFrame = installMockAnimationFrame();
+
+    try {
+      const { container } = render(
+        <Lobby
+          experiences={createExperiences()}
+          activeIndex={1}
+          isFullscreen={false}
+          onActiveIndexChange={vi.fn()}
+          onLaunch={vi.fn()}
+          onRandom={vi.fn()}
+          onToggleFullscreen={vi.fn()}
+        />,
+      );
+
+      expect(container.querySelectorAll('[data-live="true"]')).toHaveLength(1);
+
+      act(() => {
+        animationFrame.flushFrames(220, 16);
+      });
+
+      expect(container.querySelectorAll('[data-live="true"]')).toHaveLength(3);
+
+      act(() => {
+        animationFrame.flushFrames(60, 100);
+      });
+
+      expect(container.querySelectorAll('[data-live="true"]')).toHaveLength(1);
+    } finally {
+      animationFrame.restore();
+    }
   });
 
   it('wraps from the last experience back to the first when advancing', async () => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ExperienceDocument } from './ExperienceDocument';
 
 function PreviewFallback({ experience }) {
@@ -14,35 +14,50 @@ function PreviewFallback({ experience }) {
   );
 }
 
-export function PreviewArt({ experience, isActive, muted = false }) {
+export function PreviewArt({ experience, isActive, isLive = isActive, muted = false }) {
   const [previewHtml, setPreviewHtml] = useState('');
+  const hasRequestedPreviewRef = useRef(false);
 
   useEffect(() => {
-    let isCancelled = false;
-
     setPreviewHtml('');
+    hasRequestedPreviewRef.current = false;
+  }, [experience]);
+
+  useEffect(() => {
+    if (!isLive || hasRequestedPreviewRef.current) {
+      return;
+    }
+
+    let isCancelled = false;
+    hasRequestedPreviewRef.current = true;
 
     experience.loadPreviewHtml().then((nextHtml) => {
       if (!isCancelled) {
         setPreviewHtml(nextHtml);
+      }
+    }).catch(() => {
+      if (!isCancelled) {
+        hasRequestedPreviewRef.current = false;
       }
     });
 
     return () => {
       isCancelled = true;
     };
-  }, [experience]);
+  }, [experience, isLive]);
+
+  const shouldRenderRuntime = isLive && Boolean(previewHtml);
 
   return (
     <div className={`preview-art ${isActive ? 'is-active' : ''}`.trim()}>
       <div className="preview-art__runtime">
-        {previewHtml ? (
+        {shouldRenderRuntime ? (
           <ExperienceDocument
             className="experience-runtime--preview"
+            fpsCap={30}
             html={previewHtml}
             mode="preview"
             muted={muted}
-            previewActive={isActive}
             title={`${experience.title} preview`}
           />
         ) : (

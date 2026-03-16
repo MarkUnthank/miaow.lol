@@ -321,6 +321,39 @@ describe('App', () => {
     expect(screen.getByTestId('lobby')).toBeInTheDocument();
   });
 
+  it('unmounts the lobby in player mode and uses mode-aware preloading', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const rootLobbyState = JSON.parse(JSON.stringify(window.history.state));
+
+    expect(screen.getByTestId('lobby')).toBeInTheDocument();
+    expect(screen.queryByTestId('player')).not.toBeInTheDocument();
+    expect(appTestMocks.experiences[0].preload).toHaveBeenCalledTimes(1);
+    expect(appTestMocks.experiences[1].preload).not.toHaveBeenCalled();
+    expect(appTestMocks.experiences[2].preload).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'launch-second' }));
+
+    expect(screen.getByTestId('player-title')).toHaveTextContent('Box Fort');
+    expect(screen.queryByTestId('lobby')).not.toBeInTheDocument();
+    expect(appTestMocks.experiences[0].preload).toHaveBeenCalledTimes(2);
+    expect(appTestMocks.experiences[1].preload).toHaveBeenCalledTimes(2);
+    expect(appTestMocks.experiences[2].preload).toHaveBeenCalledTimes(1);
+
+    const historyGoSpy = vi.spyOn(window.history, 'go').mockImplementation((delta) => {
+      if (delta === -1) {
+        window.dispatchEvent(new PopStateEvent('popstate', { state: rootLobbyState }));
+      }
+    });
+
+    await user.click(screen.getByRole('button', { name: 'home' }));
+
+    expect(historyGoSpy).toHaveBeenCalledWith(-1);
+    expect(screen.getByTestId('lobby')).toBeInTheDocument();
+    expect(screen.queryByTestId('player')).not.toBeInTheDocument();
+    expect(screen.getByTestId('lobby-active-index')).toHaveTextContent('0');
+  });
+
   it('uses the Previous button to go to the last experience in the player stack', async () => {
     const user = userEvent.setup();
     render(<App />);

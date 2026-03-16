@@ -217,14 +217,27 @@ export default function App() {
   }, [initialAppState]);
 
   useEffect(() => {
-    experiences[activeIndex].preload();
-    experiences[getWrappedIndex(activeIndex + 1)].preload();
-    experiences[getWrappedIndex(activeIndex - 1)].preload();
-  }, [activeIndex]);
+    if (mode === 'lobby') {
+      experiences[activeIndex].preload();
+      return;
+    }
 
-  useEffect(() => {
-    experiences[currentIndex].preload();
-  }, [currentIndex]);
+    const preloadIndexes = [
+      currentIndex,
+      getWrappedIndex(currentIndex + 1),
+      getWrappedIndex(currentIndex - 1),
+    ];
+    const preloadedIndexes = new Set();
+
+    preloadIndexes.forEach((index) => {
+      if (preloadedIndexes.has(index)) {
+        return;
+      }
+
+      preloadedIndexes.add(index);
+      experiences[index].preload();
+    });
+  }, [activeIndex, currentIndex, mode]);
 
   useEffect(() => {
     initializeAnalytics();
@@ -424,19 +437,21 @@ export default function App() {
         </div>
       </div>
 
-      <section className={`screen-layer lobby-layer ${mode === 'lobby' ? 'is-active' : 'is-hidden'}`}>
-        <Lobby
-          experiences={experiences}
-          activeIndex={activeIndex}
-          isFullscreen={isFullscreen}
-          isMuted={isMuted}
-          onActiveIndexChange={setActiveIndex}
-          onLaunch={openExperience}
-          onRandom={openRandomExperience}
-          onToggleFullscreen={togglePlayerFullscreen}
-          onToggleMute={toggleMuted}
-        />
-      </section>
+      {mode === 'lobby' ? (
+        <section className="screen-layer lobby-layer is-active">
+          <Lobby
+            experiences={experiences}
+            activeIndex={activeIndex}
+            isFullscreen={isFullscreen}
+            isMuted={isMuted}
+            onActiveIndexChange={setActiveIndex}
+            onLaunch={openExperience}
+            onRandom={openRandomExperience}
+            onToggleFullscreen={togglePlayerFullscreen}
+            onToggleMute={toggleMuted}
+          />
+        </section>
+      ) : null}
 
       {mode === 'player' ? (
         <section className="screen-layer player-layer is-active">

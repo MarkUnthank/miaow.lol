@@ -8,12 +8,16 @@ describe('ExperienceDocument', () => {
   let exitSpy;
   let toggleSpy;
   let isActiveSpy;
+  let originalCancelAnimationFrame;
+  let originalRequestAnimationFrame;
 
   beforeEach(() => {
     requestSpy = vi.fn().mockResolvedValue(undefined);
     exitSpy = vi.fn().mockResolvedValue(undefined);
     toggleSpy = vi.fn().mockResolvedValue(undefined);
     isActiveSpy = vi.fn().mockReturnValue(false);
+    originalRequestAnimationFrame = window.requestAnimationFrame;
+    originalCancelAnimationFrame = window.cancelAnimationFrame;
 
     window[APP_API_NAME] = {
       fullscreen: {
@@ -24,6 +28,46 @@ describe('ExperienceDocument', () => {
       },
     };
   });
+
+  function installMockAnimationFrame(frameDurationMs) {
+    let now = 0;
+    let nextFrameId = 1;
+    const pendingCallbacks = new Map();
+
+    Object.defineProperty(window, 'requestAnimationFrame', {
+      configurable: true,
+      value: (callback) => {
+        const frameId = nextFrameId;
+        nextFrameId += 1;
+        pendingCallbacks.set(frameId, callback);
+        return frameId;
+      },
+      writable: true,
+    });
+
+    Object.defineProperty(window, 'cancelAnimationFrame', {
+      configurable: true,
+      value: (frameId) => {
+        pendingCallbacks.delete(frameId);
+      },
+      writable: true,
+    });
+
+    return {
+      flushFrames(frameCount) {
+        for (let frameIndex = 0; frameIndex < frameCount; frameIndex += 1) {
+          if (pendingCallbacks.size < 1) {
+            break;
+          }
+
+          now += frameDurationMs;
+          const callbacks = Array.from(pendingCallbacks.values());
+          pendingCallbacks.clear();
+          callbacks.forEach((callback) => callback(now));
+        }
+      },
+    };
+  }
 
   it('routes legacy fullscreen document calls through the app fullscreen api', async () => {
     const html = `
@@ -256,6 +300,133 @@ describe('ExperienceDocument', () => {
       Object.defineProperty(window, 'AudioContext', {
         configurable: true,
         value: OriginalAudioContext,
+        writable: true,
+      });
+    }
+  });
+
+  it('caps runtime animation frames to a 30 fps budget', async () => {
+    const animationFrameDriver = installMockAnimationFrame(10);
+
+    const html = `
+      <div id="canvas" data-frames="0"></div>
+      <script>
+        const canvas = document.getElementById('canvas');
+
+        function loop() {
+          canvas.dataset.frames = String(Number(canvas.dataset.frames) + 1);
+          requestAnimationFrame(loop);
+        }
+
+        requestAnimationFrame(loop);
+      </script>
+    `;
+
+    try {
+      const { container } = render(<ExperienceDocument fpsCap={30} html={html} title="30 fps toy" />);
+      const canvas = container.querySelector('.experience-runtime')?.shadowRoot?.querySelector('#canvas');
+
+      expect(canvas).toBeTruthy();
+
+      animationFrameDriver.flushFrames(120);
+
+      const frameCount = Number(canvas?.dataset.frames ?? 0);
+      expect(frameCount).toBeGreaterThanOrEqual(29);
+      expect(frameCount).toBeLessThanOrEqual(31);
+    } finally {
+      Object.defineProperty(window, 'requestAnimationFrame', {
+        configurable: true,
+        value: originalRequestAnimationFrame,
+        writable: true,
+      });
+      Object.defineProperty(window, 'cancelAnimationFrame', {
+        configurable: true,
+        value: originalCancelAnimationFrame,
+        writable: true,
+      });
+    }
+  });
+
+  it('caps runtime animation frames to a 60 fps budget', async () => {
+    const animationFrameDriver = installMockAnimationFrame(10);
+
+    const html = `
+      <div id="canvas" data-frames="0"></div>
+      <script>
+        const canvas = document.getElementById('canvas');
+
+        function loop() {
+          canvas.dataset.frames = String(Number(canvas.dataset.frames) + 1);
+          requestAnimationFrame(loop);
+        }
+
+        requestAnimationFrame(loop);
+      </script>
+    `;
+
+    try {
+      const { container } = render(<ExperienceDocument fpsCap={60} html={html} title="60 fps toy" />);
+      const canvas = container.querySelector('.experience-runtime')?.shadowRoot?.querySelector('#canvas');
+
+      expect(canvas).toBeTruthy();
+
+      animationFrameDriver.flushFrames(120);
+
+      const frameCount = Number(canvas?.dataset.frames ?? 0);
+      expect(frameCount).toBeGreaterThanOrEqual(59);
+      expect(frameCount).toBeLessThanOrEqual(61);
+    } finally {
+      Object.defineProperty(window, 'requestAnimationFrame', {
+        configurable: true,
+        value: originalRequestAnimationFrame,
+        writable: true,
+      });
+      Object.defineProperty(window, 'cancelAnimationFrame', {
+        configurable: true,
+        value: originalCancelAnimationFrame,
+        writable: true,
+      });
+    }
+  });
+
+  it('preserves cancelAnimationFrame for queued runtime callbacks', async () => {
+    const animationFrameDriver = installMockAnimationFrame(10);
+
+    const html = `
+      <div id="canvas" data-fired="false" data-live="false"></div>
+      <script>
+        const canvas = document.getElementById('canvas');
+        const cancelledFrameId = requestAnimationFrame(() => {
+          canvas.dataset.fired = 'true';
+        });
+
+        cancelAnimationFrame(cancelledFrameId);
+
+        requestAnimationFrame(() => {
+          canvas.dataset.live = 'true';
+        });
+      </script>
+    `;
+
+    try {
+      const { container } = render(<ExperienceDocument fpsCap={60} html={html} title="cancel frame toy" />);
+      const canvas = container.querySelector('.experience-runtime')?.shadowRoot?.querySelector('#canvas');
+
+      expect(canvas).toBeTruthy();
+
+      animationFrameDriver.flushFrames(5);
+
+      expect(canvas?.dataset.live).toBe('true');
+      expect(canvas?.dataset.fired).toBe('false');
+    } finally {
+      Object.defineProperty(window, 'requestAnimationFrame', {
+        configurable: true,
+        value: originalRequestAnimationFrame,
+        writable: true,
+      });
+      Object.defineProperty(window, 'cancelAnimationFrame', {
+        configurable: true,
+        value: originalCancelAnimationFrame,
         writable: true,
       });
     }
