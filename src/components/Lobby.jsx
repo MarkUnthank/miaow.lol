@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeftIcon, ArrowRightIcon, DieIcon, ExpandIcon, SpeakerIcon } from './Icons';
 import { PreviewArt } from './PreviewArt';
 import { getCenteredLoopIndex, getLoopRecenterCopyShift, getNearestLoopIndex, LOOP_COPY_COUNT } from './lobbyLoop';
+import { SITE_AUTHOR_URL } from '../siteConfig';
+
+const GITHUB_REPO_URL = 'https://github.com/MarkUnthank/miaow.lol';
 
 export function Lobby({ experiences, activeIndex, isFullscreen, isMuted, onActiveIndexChange, onLaunch, onRandom, onToggleFullscreen, onToggleMute }) {
   const trackRef = useRef(null);
@@ -442,6 +445,22 @@ export function Lobby({ experiences, activeIndex, isFullscreen, isMuted, onActiv
           <DieIcon className="action-button__icon" />
           <span>Random toy</span>
         </button>
+      </div>
+
+      <div className="lobby-footer" role="contentinfo">
+        <span>
+          A{' '}
+          <a className="lobby-footer__link" href={SITE_AUTHOR_URL} rel="noreferrer" target="_blank">
+            Really Nice
+          </a>{' '}
+          toy
+        </span>
+        <span aria-hidden="true" className="lobby-footer__separator">
+          ·
+        </span>
+        <a className="lobby-footer__link" href={GITHUB_REPO_URL} rel="noreferrer" target="_blank">
+          GitHub
+        </a>
       </div>
     </div>
   );
