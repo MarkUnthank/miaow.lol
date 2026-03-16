@@ -1,4 +1,4 @@
-import { EXPERIENCE_QUERY_PARAM, resolveUrl } from './siteConfig';
+import { EXPERIENCE_QUERY_PARAM, buildExperienceShareDescription, buildExperienceShareTitle, resolveUrl } from './siteConfig';
 
 export function buildHomeUrl(locationLike) {
   const url = resolveUrl(locationLike);
@@ -36,15 +36,15 @@ export function getExperienceIndexFromLocation(experienceList, locationLike) {
 export function buildSharePayload(experience, locationLike) {
   if (!experience) {
     return {
-      text: 'Play strange little browser toys at miaow.lol.',
-      title: 'miaow.lol',
+      text: '15 chaotic little browser toys for cats, children, and adults who were supposed to be doing something else.',
+      title: 'omg... these cat toys on miaow.lol just ate my afternoon',
       url: buildHomeUrl(locationLike),
     };
   }
 
   return {
-    text: experience.description,
-    title: `${experience.title} | miaow.lol`,
+    text: buildExperienceShareDescription(experience),
+    title: buildExperienceShareTitle(experience),
     url: buildExperienceUrl(experience.id, locationLike),
   };
 }

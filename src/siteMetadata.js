@@ -1,5 +1,13 @@
 import { buildExperienceUrl, buildHomeUrl } from './share';
-import { DEFAULT_SITE_DESCRIPTION, DEFAULT_SITE_TITLE, SITE_AUTHOR, SITE_AUTHOR_URL, SITE_NAME } from './siteConfig';
+import {
+  DEFAULT_SITE_DESCRIPTION,
+  DEFAULT_SITE_TITLE,
+  SITE_AUTHOR,
+  SITE_AUTHOR_URL,
+  SITE_NAME,
+  buildExperienceShareDescription,
+  buildExperienceShareTitle,
+} from './siteConfig';
 
 export const SEO_DEFAULTS = {
   description: DEFAULT_SITE_DESCRIPTION,
@@ -23,14 +31,8 @@ export function trimToLength(value, maxLength = 160) {
 }
 
 export function buildExperienceDescription(experience) {
-  const summary = cleanText(experience?.description);
-
-  if (!summary) {
-    return SEO_DEFAULTS.description;
-  }
-
-  const punctuation = /[.!?]$/.test(summary) ? '' : '.';
-  return trimToLength(`${summary}${punctuation} Part of ${SITE_NAME}, an open-source project by ${SITE_AUTHOR}.`);
+  const summary = cleanText(buildExperienceShareDescription(experience));
+  return summary ? trimToLength(summary) : SEO_DEFAULTS.description;
 }
 
 function buildCollectionStructuredData(locationLike) {
@@ -89,7 +91,7 @@ export function buildSeoMetadata(experience, locationLike) {
   return {
     description: buildExperienceDescription(experience),
     structuredData: buildStructuredData(experience, locationLike),
-    title: `${cleanText(experience.title) || SITE_NAME} | ${SITE_NAME}`,
+    title: buildExperienceShareTitle(experience),
     url: buildExperienceUrl(experience.id, locationLike),
   };
 }

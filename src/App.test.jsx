@@ -226,22 +226,25 @@ describe('App', () => {
     const homeUrl = `${window.location.origin}/`;
     const experienceUrl = `${window.location.origin}/?experience=experience-1`;
 
-    expect(document.title).toBe('miaow.lol | Open-source cat browser toys by Really Nice');
+    expect(document.title).toBe('omg... these cat toys on miaow.lol just ate my afternoon');
     expect(document.querySelector('meta[name="description"]')).toHaveAttribute(
       'content',
-      'Play 15 open-source cat-themed browser toys and interactive mini experiences built for the web. miaow.lol is a Really Nice project.',
+      '15 chaotic little browser toys for cats, children, and adults who were supposed to be doing something else.',
     );
     expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute('href', homeUrl);
     expect(document.querySelector('meta[property="og:url"]')).toHaveAttribute('content', homeUrl);
 
     await user.click(screen.getByRole('button', { name: 'launch-second' }));
 
-    expect(document.title).toBe('Box Fort | miaow.lol');
+    expect(document.title).toBe('BREAKING: I literally cannot stop using Box Fort on miaow.lol');
     expect(document.querySelector('meta[name="description"]')).toHaveAttribute(
       'content',
-      'Box Fort description. Part of miaow.lol, an open-source project by Really Nice.',
+      'Box Fort is a chaotic little cat toy that starts as "just one click" and ends with you sending the link to everyone you know.',
     );
-    expect(document.querySelector('meta[property="og:title"]')).toHaveAttribute('content', 'Box Fort | miaow.lol');
+    expect(document.querySelector('meta[property="og:title"]')).toHaveAttribute(
+      'content',
+      'BREAKING: I literally cannot stop using Box Fort on miaow.lol',
+    );
     expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute('href', experienceUrl);
     expect(document.querySelector('meta[property="og:url"]')).toHaveAttribute('content', experienceUrl);
   });
@@ -345,8 +348,8 @@ describe('App', () => {
 
     expect(shareMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        text: 'Box Fort description',
-        title: 'Box Fort | miaow.lol',
+        text: 'Box Fort is a chaotic little cat toy that starts as "just one click" and ends with you sending the link to everyone you know.',
+        title: 'BREAKING: I literally cannot stop using Box Fort on miaow.lol',
         url: expectedUrl,
       }),
     );
