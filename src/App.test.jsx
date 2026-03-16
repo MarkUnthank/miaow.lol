@@ -319,6 +319,7 @@ describe('App', () => {
 
   it('opens a multi-option share menu on desktop', async () => {
     const user = userEvent.setup();
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
     render(<App />);
     const expectedUrl = `${window.location.origin}/?experience=experience-0`;
 
@@ -328,12 +329,18 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Copy link' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'WhatsApp' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Telegram' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Email' })).toHaveAttribute(
+      'href',
+      expect.stringContaining(encodeURIComponent('BREAKING: I literally cannot stop using Cat Mash Chaos on miaow.lol')),
+    );
     expect(screen.getByRole('link', { name: 'Email' })).toHaveAttribute('href', expect.stringContaining(encodeURIComponent(expectedUrl)));
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    randomSpy.mockRestore();
   });
 
   it('uses the native share sheet on mobile-like devices', async () => {
     const user = userEvent.setup();
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
     const expectedUrl = `${window.location.origin}/?experience=experience-1`;
 
     Object.defineProperty(navigator, 'maxTouchPoints', {
@@ -354,6 +361,40 @@ describe('App', () => {
       }),
     );
     expect(screen.queryByRole('dialog', { name: 'Share options' })).not.toBeInTheDocument();
+    randomSpy.mockRestore();
+  });
+
+  it('picks a fresh share variant every time share is triggered', async () => {
+    const user = userEvent.setup();
+    const randomSpy = vi.spyOn(Math, 'random');
+
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      configurable: true,
+      value: 5,
+      writable: true,
+    });
+
+    randomSpy.mockReturnValueOnce(0).mockReturnValueOnce(0.99);
+
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'launch-second' }));
+    await user.click(screen.getByRole('button', { name: 'Share' }));
+    await user.click(screen.getByRole('button', { name: 'Share' }));
+
+    expect(shareMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        title: 'BREAKING: I literally cannot stop using Box Fort on miaow.lol',
+      }),
+    );
+    expect(shareMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        title: 'terrible update: Box Fort on miaow.lol is now my whole personality',
+      }),
+    );
+
+    randomSpy.mockRestore();
   });
 
   it('opens a shared experience directly from the query string', () => {

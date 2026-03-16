@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { buildShareLinks, buildSharePayload, shouldUseNativeShare } from '../share';
 import {
   EmailIcon,
@@ -13,6 +13,7 @@ import {
 
 const NUDGE_DELAY = 15_000;
 const NUDGE_DURATION = 1_150;
+const DEFAULT_SHARE_RANDOM = () => 0;
 
 async function copyText(text) {
   if (navigator.clipboard?.writeText) {
@@ -50,11 +51,12 @@ export function ShareDock({ experience }) {
   const nudgeReleaseRef = useRef(0);
   const [isOpen, setIsOpen] = useState(false);
   const [isNudging, setIsNudging] = useState(false);
-  const payload = useMemo(() => buildSharePayload(experience, window.location), [experience]);
-  const links = useMemo(() => buildShareLinks(payload), [payload]);
+  const [payload, setPayload] = useState(() => buildSharePayload(experience, window.location, DEFAULT_SHARE_RANDOM));
+  const links = buildShareLinks(payload);
 
   useEffect(() => {
     setIsOpen(false);
+    setPayload(buildSharePayload(experience, window.location, DEFAULT_SHARE_RANDOM));
   }, [experience.id]);
 
   useEffect(() => {
@@ -108,19 +110,27 @@ export function ShareDock({ experience }) {
 
   async function handlePrimaryClick() {
     setIsNudging(false);
+    const nextPayload = buildSharePayload(experience, window.location);
 
     if (shouldUseNativeShare()) {
       try {
-        await navigator.share(payload);
+        await navigator.share(nextPayload);
       } catch (error) {
         if (error?.name !== 'AbortError') {
+          setPayload(nextPayload);
           setIsOpen(true);
         }
       }
       return;
     }
 
-    setIsOpen((currentValue) => !currentValue);
+    if (isOpen) {
+      setIsOpen(false);
+      return;
+    }
+
+    setPayload(nextPayload);
+    setIsOpen(true);
   }
 
   async function handleCopyLink() {

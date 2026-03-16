@@ -1,4 +1,5 @@
-import { EXPERIENCE_QUERY_PARAM, buildExperienceShareDescription, buildExperienceShareTitle, resolveUrl } from './siteConfig';
+import { resolveUrl, EXPERIENCE_QUERY_PARAM } from './siteConfig';
+import { buildShareCopy } from './shareCopy';
 
 export function buildHomeUrl(locationLike) {
   const url = resolveUrl(locationLike);
@@ -33,19 +34,12 @@ export function getExperienceIndexFromLocation(experienceList, locationLike) {
   return experienceList.findIndex((experience) => experience.id === experienceId);
 }
 
-export function buildSharePayload(experience, locationLike) {
-  if (!experience) {
-    return {
-      text: '15 chaotic little browser toys for cats, children, and adults who were supposed to be doing something else.',
-      title: 'omg... these cat toys on miaow.lol just ate my afternoon',
-      url: buildHomeUrl(locationLike),
-    };
-  }
-
+export function buildSharePayload(experience, locationLike, random = Math.random) {
+  const shareCopy = buildShareCopy(experience, random);
   return {
-    text: buildExperienceShareDescription(experience),
-    title: buildExperienceShareTitle(experience),
-    url: buildExperienceUrl(experience.id, locationLike),
+    text: shareCopy.text,
+    title: shareCopy.title,
+    url: experience ? buildExperienceUrl(experience.id, locationLike) : buildHomeUrl(locationLike),
   };
 }
 

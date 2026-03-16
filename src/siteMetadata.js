@@ -1,13 +1,6 @@
 import { buildExperienceUrl, buildHomeUrl } from './share';
-import {
-  DEFAULT_SITE_DESCRIPTION,
-  DEFAULT_SITE_TITLE,
-  SITE_AUTHOR,
-  SITE_AUTHOR_URL,
-  SITE_NAME,
-  buildExperienceShareDescription,
-  buildExperienceShareTitle,
-} from './siteConfig';
+import { DEFAULT_SITE_DESCRIPTION, DEFAULT_SITE_TITLE, SITE_AUTHOR, SITE_AUTHOR_URL, SITE_NAME } from './siteConfig';
+import { buildDefaultShareCopy } from './shareCopy';
 
 export const SEO_DEFAULTS = {
   description: DEFAULT_SITE_DESCRIPTION,
@@ -31,7 +24,7 @@ export function trimToLength(value, maxLength = 160) {
 }
 
 export function buildExperienceDescription(experience) {
-  const summary = cleanText(buildExperienceShareDescription(experience));
+  const summary = cleanText(buildDefaultShareCopy(experience).text);
   return summary ? trimToLength(summary) : SEO_DEFAULTS.description;
 }
 
@@ -91,7 +84,7 @@ export function buildSeoMetadata(experience, locationLike) {
   return {
     description: buildExperienceDescription(experience),
     structuredData: buildStructuredData(experience, locationLike),
-    title: buildExperienceShareTitle(experience),
+    title: buildDefaultShareCopy(experience).title,
     url: buildExperienceUrl(experience.id, locationLike),
   };
 }

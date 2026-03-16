@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import { experienceCatalog } from '../src/data/experienceCatalog';
+import { buildSeoMetadata } from '../src/siteMetadata';
 import worker, { buildSitemapXml, isPreviewRequest } from './index';
 
 const baseDocument = `<!doctype html>
@@ -56,14 +58,17 @@ describe('cloudflare worker integration', () => {
       },
       PUBLIC_SITE_ORIGIN: 'https://miaow.lol',
     };
+    const locationLike = new URL('/?experience=nap-nebula', env.PUBLIC_SITE_ORIGIN);
+    const experience = experienceCatalog.find((entry) => entry.id === 'nap-nebula');
+    const metadata = buildSeoMetadata(experience, locationLike);
 
     const response = await worker.fetch(new Request('https://preview.workers.dev/?experience=nap-nebula'), env);
     const html = await response.text();
 
     expect(env.ASSETS.fetch).toHaveBeenCalledTimes(1);
-    expect(html).toContain('<title>Nap Nebula | miaow.lol</title>');
-    expect(html).toContain('A hand-drawn chaos toy with wobbly letters, bold splashes, and click-heavy playfulness.');
-    expect(html).toContain('href="https://miaow.lol/?experience=nap-nebula"');
+    expect(html).toContain(`<title>${metadata.title}</title>`);
+    expect(html).toContain(metadata.description.replace(/"/g, '&quot;'));
+    expect(html).toContain(`href="${metadata.url}"`);
     expect(html).toContain('"name":"Nap Nebula"');
     expect(response.headers.get('x-robots-tag')).toBe('noindex, nofollow');
   });
