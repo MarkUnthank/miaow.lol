@@ -1,5 +1,6 @@
 import { experienceCatalog } from '../src/data/experienceCatalog';
 import { EXPERIENCE_QUERY_PARAM, SITE_ORIGIN } from '../src/siteConfig';
+import { buildExperiencePath, getExperienceIdFromPathname } from '../src/share';
 import { buildSeoMetadata } from '../src/siteMetadata';
 
 const HOME_PATHS = new Set(['/', '/index.html']);
@@ -105,14 +106,44 @@ function createLocationLike(requestUrl, siteOrigin) {
   return new URL(`${requestUrl.pathname}${requestUrl.search}${requestUrl.hash}`, siteOrigin);
 }
 
-function findExperienceFromRequest(requestUrl) {
-  const experienceId = requestUrl.searchParams.get(EXPERIENCE_QUERY_PARAM);
-
+function findExperienceById(experienceId) {
   if (!experienceId) {
     return null;
   }
 
   return experienceCatalog.find((experience) => experience.id === experienceId) ?? null;
+}
+
+function findExperienceFromPathname(pathname) {
+  return findExperienceById(getExperienceIdFromPathname(pathname));
+}
+
+function findExperienceFromRequest(requestUrl) {
+  return findExperienceFromPathname(requestUrl.pathname) ?? findExperienceById(requestUrl.searchParams.get(EXPERIENCE_QUERY_PARAM));
+}
+
+function buildCanonicalExperienceRedirect(requestUrl, siteOrigin) {
+  const pathExperience = findExperienceFromPathname(requestUrl.pathname);
+  const legacyExperience = HOME_PATHS.has(requestUrl.pathname) ? findExperienceById(requestUrl.searchParams.get(EXPERIENCE_QUERY_PARAM)) : null;
+  const experience = pathExperience ?? legacyExperience;
+
+  if (!experience) {
+    return null;
+  }
+
+  const canonicalPath = buildExperiencePath(experience.id);
+  const shouldRedirectLegacyQuery = Boolean(legacyExperience);
+  const shouldRedirectPath = requestUrl.pathname !== canonicalPath;
+
+  if (!shouldRedirectLegacyQuery && !shouldRedirectPath) {
+    return null;
+  }
+
+  const redirectUrl = new URL(`${requestUrl.pathname}${requestUrl.search}`, siteOrigin);
+  redirectUrl.pathname = canonicalPath;
+  redirectUrl.searchParams.delete(EXPERIENCE_QUERY_PARAM);
+  redirectUrl.hash = '';
+  return redirectUrl;
 }
 
 function shouldRedirectToHttps(request, requestUrl) {
@@ -166,7 +197,7 @@ function buildRobotsText(siteOrigin, preview) {
 export function buildSitemapXml(siteOrigin) {
   const urls = [
     `${siteOrigin}/`,
-    ...experienceCatalog.map((experience) => `${siteOrigin}/?${EXPERIENCE_QUERY_PARAM}=${encodeURIComponent(experience.id)}`),
+    ...experienceCatalog.map((experience) => `${siteOrigin}${buildExperiencePath(experience.id)}`),
   ];
 
   return [
@@ -213,6 +244,14 @@ export default {
 
     const siteOrigin = getSiteOrigin(requestUrl, env);
     const preview = isPreviewRequest(requestUrl, env);
+    const canonicalExperienceRedirect = buildCanonicalExperienceRedirect(requestUrl, siteOrigin);
+
+    if (canonicalExperienceRedirect) {
+      return applyHeaders(
+        Response.redirect(canonicalExperienceRedirect.toString(), request.method === 'GET' || request.method === 'HEAD' ? 301 : 308),
+        preview ? { 'X-Robots-Tag': 'noindex, nofollow' } : {},
+      );
+    }
 
     if (requestUrl.pathname === '/robots.txt') {
       return applyHeaders(
@@ -238,7 +277,7 @@ export default {
       );
     }
 
-    if (HOME_PATHS.has(requestUrl.pathname)) {
+    if (HOME_PATHS.has(requestUrl.pathname) || findExperienceFromPathname(requestUrl.pathname)) {
       return handleHtmlRequest(request, env);
     }
 

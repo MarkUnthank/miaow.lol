@@ -46,7 +46,7 @@ Security note: the GA4 measurement ID is public client-side configuration, not a
 
 ## Cloudflare Workers
 
-This repo deploys as a Worker with static assets behind the `ASSETS` binding. The Worker layer keeps home and shared toy URLs crawlable by injecting the right SEO and social metadata at the edge, and it serves `robots.txt` plus `sitemap.xml`.
+This repo deploys as a Worker with static assets behind the `ASSETS` binding. The Worker layer keeps home and shared toy URLs crawlable by injecting the right SEO and social metadata at the edge, redirects legacy `?experience=` links to canonical `/<toy-slug>/` URLs, and serves `robots.txt` plus `sitemap.xml`.
 
 ```bash
 npm run cf:check
@@ -84,9 +84,9 @@ Set this GitHub repository variable if you want GA4 enabled in CI-built deploys:
 - `src/data/experienceCatalog.js` is the Worker-safe toy catalog used for edge SEO and sitemap generation.
 - `src/toys/` contains the toy implementations.
 - `src/components/` contains the lobby, player, share UI, and supporting pieces.
-- `src/share.js` builds share URLs and payloads for each toy.
+- `src/share.js` builds canonical toy URLs, legacy URL parsing, and share payloads for each toy.
 - `src/seo.js` updates the page title, meta description, and canonical URL.
-- `worker/index.js` injects SEO/share metadata for `?experience=...` requests and serves crawler-friendly text endpoints.
+- `worker/index.js` injects SEO/share metadata for canonical toy paths, redirects legacy `?experience=...` requests, and serves crawler-friendly text endpoints.
 - `src/html/` contains preview HTML used by individual toys.
 - `audio/` contains the sound assets.
 

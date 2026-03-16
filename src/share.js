@@ -1,9 +1,49 @@
 import { resolveUrl, EXPERIENCE_QUERY_PARAM } from './siteConfig';
 import { buildShareCopy } from './shareCopy';
 
+function trimSlashes(value) {
+  return String(value ?? '').replace(/^\/+|\/+$/g, '');
+}
+
+export function buildExperiencePath(experienceId) {
+  const slug = trimSlashes(experienceId);
+
+  if (!slug) {
+    return '/';
+  }
+
+  return `/${encodeURIComponent(slug)}/`;
+}
+
+export function getExperienceIdFromPathname(pathname) {
+  const slug = trimSlashes(pathname);
+
+  if (!slug || slug === 'index.html' || slug.includes('/')) {
+    return null;
+  }
+
+  try {
+    return decodeURIComponent(slug);
+  } catch {
+    return slug;
+  }
+}
+
+export function getExperienceIdFromLocation(locationLike) {
+  const url = resolveUrl(locationLike);
+  const pathExperienceId = getExperienceIdFromPathname(url.pathname);
+
+  if (pathExperienceId) {
+    return pathExperienceId;
+  }
+
+  return url.searchParams.get(EXPERIENCE_QUERY_PARAM);
+}
+
 export function buildHomeUrl(locationLike) {
   const url = resolveUrl(locationLike);
-  url.searchParams.delete(EXPERIENCE_QUERY_PARAM);
+  url.pathname = '/';
+  url.search = '';
   url.hash = '';
   return url.toString();
 }
@@ -12,7 +52,7 @@ export function buildExperienceUrl(experienceId, locationLike) {
   const url = new URL(buildHomeUrl(locationLike));
 
   if (experienceId) {
-    url.searchParams.set(EXPERIENCE_QUERY_PARAM, experienceId);
+    url.pathname = buildExperiencePath(experienceId);
   }
 
   return url.toString();
@@ -24,8 +64,7 @@ export function buildHistoryPath(urlLike) {
 }
 
 export function getExperienceIndexFromLocation(experienceList, locationLike) {
-  const url = resolveUrl(locationLike);
-  const experienceId = url.searchParams.get(EXPERIENCE_QUERY_PARAM);
+  const experienceId = getExperienceIdFromLocation(locationLike);
 
   if (!experienceId) {
     return -1;

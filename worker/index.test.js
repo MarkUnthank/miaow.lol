@@ -51,18 +51,33 @@ describe('cloudflare worker integration', () => {
     expect(env.ASSETS.fetch).not.toHaveBeenCalled();
   });
 
-  it('rewrites home document metadata for a shared experience url', async () => {
+  it('redirects legacy shared experience query urls to canonical experience paths', async () => {
+    const env = {
+      ASSETS: {
+        fetch: vi.fn(),
+      },
+      PUBLIC_SITE_ORIGIN: 'https://miaow.lol',
+    };
+
+    const response = await worker.fetch(new Request('https://miaow.lol/?experience=nap-nebula'), env);
+
+    expect(response.status).toBe(301);
+    expect(response.headers.get('location')).toBe('https://miaow.lol/nap-nebula/');
+    expect(env.ASSETS.fetch).not.toHaveBeenCalled();
+  });
+
+  it('rewrites document metadata for a canonical experience path', async () => {
     const env = {
       ASSETS: {
         fetch: vi.fn().mockResolvedValue(createAssetResponse(baseDocument)),
       },
       PUBLIC_SITE_ORIGIN: 'https://miaow.lol',
     };
-    const locationLike = new URL('/?experience=nap-nebula', env.PUBLIC_SITE_ORIGIN);
+    const locationLike = new URL('/nap-nebula/', env.PUBLIC_SITE_ORIGIN);
     const experience = experienceCatalog.find((entry) => entry.id === 'nap-nebula');
     const metadata = buildSeoMetadata(experience, locationLike);
 
-    const response = await worker.fetch(new Request('https://preview.workers.dev/?experience=nap-nebula'), env);
+    const response = await worker.fetch(new Request('https://preview.workers.dev/nap-nebula/'), env);
     const html = await response.text();
 
     expect(env.ASSETS.fetch).toHaveBeenCalledTimes(1);
@@ -77,8 +92,8 @@ describe('cloudflare worker integration', () => {
     const sitemap = buildSitemapXml('https://miaow.lol');
 
     expect(sitemap).toContain('<loc>https://miaow.lol/</loc>');
-    expect(sitemap).toContain('<loc>https://miaow.lol/?experience=cat-mash-chaos</loc>');
-    expect(sitemap).toContain('<loc>https://miaow.lol/?experience=feline-flipper</loc>');
+    expect(sitemap).toContain('<loc>https://miaow.lol/cat-mash-chaos/</loc>');
+    expect(sitemap).toContain('<loc>https://miaow.lol/feline-flipper/</loc>');
   });
 
   it('marks workers.dev preview requests as non-indexable', () => {

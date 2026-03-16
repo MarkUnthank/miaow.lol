@@ -237,7 +237,7 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
     const homeUrl = `${window.location.origin}/`;
-    const experienceUrl = `${window.location.origin}/?experience=experience-1`;
+    const experienceUrl = `${window.location.origin}/experience-1/`;
 
     expect(document.title).toBe('omg... these cat toys on miaow.lol just ate my afternoon');
     expect(document.querySelector('meta[name="description"]')).toHaveAttribute(
@@ -283,8 +283,8 @@ describe('App', () => {
       2,
       expect.objectContaining({
         experienceId: 'experience-1',
-        pageLocation: `${window.location.origin}/?experience=experience-1`,
-        pagePath: '/?experience=experience-1',
+        pageLocation: `${window.location.origin}/experience-1/`,
+        pagePath: '/experience-1/',
         pageTitle: 'BREAKING: I literally cannot stop using Box Fort on miaow.lol',
       }),
     );
@@ -363,7 +363,7 @@ describe('App', () => {
     const user = userEvent.setup();
     const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
     render(<App />);
-    const expectedUrl = `${window.location.origin}/?experience=experience-0`;
+    const expectedUrl = `${window.location.origin}/experience-0/`;
 
     await user.click(screen.getByRole('button', { name: 'Share' }));
 
@@ -383,7 +383,7 @@ describe('App', () => {
   it('uses the native share sheet on mobile-like devices', async () => {
     const user = userEvent.setup();
     const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
-    const expectedUrl = `${window.location.origin}/?experience=experience-1`;
+    const expectedUrl = `${window.location.origin}/experience-1/`;
 
     Object.defineProperty(navigator, 'maxTouchPoints', {
       configurable: true,
@@ -443,20 +443,37 @@ describe('App', () => {
     randomSpy.mockRestore();
   });
 
-  it('opens a shared experience directly from the query string', () => {
-    window.history.replaceState(null, '', '/?experience=experience-1');
+  it('opens a shared experience directly from the canonical path', () => {
+    window.history.replaceState(null, '', '/experience-1/');
 
     render(<App />);
 
     expect(screen.getByTestId('player-title')).toHaveTextContent('Box Fort');
     expect(window.history.state).toMatchObject({ mode: 'player', currentIndex: 1, step: 0 });
+    expect(window.location.pathname).toBe('/experience-1/');
     expect(analyticsTestMocks.trackPageView).toHaveBeenCalledWith(
       expect.objectContaining({
         experienceId: 'experience-1',
-        pageLocation: `${window.location.origin}/?experience=experience-1`,
+        pageLocation: `${window.location.origin}/experience-1/`,
       }),
     );
     expect(analyticsTestMocks.trackExperienceView).toHaveBeenCalledWith('experience-1');
+  });
+
+  it('canonicalizes a legacy query-string shared experience url', () => {
+    window.history.replaceState(null, '', '/?experience=experience-1');
+
+    render(<App />);
+
+    expect(screen.getByTestId('player-title')).toHaveTextContent('Box Fort');
+    expect(window.location.pathname).toBe('/experience-1/');
+    expect(window.location.search).toBe('');
+    expect(analyticsTestMocks.trackPageView).toHaveBeenCalledWith(
+      expect.objectContaining({
+        experienceId: 'experience-1',
+        pageLocation: `${window.location.origin}/experience-1/`,
+      }),
+    );
   });
 
   it('launches a random experience from the lobby button', async () => {

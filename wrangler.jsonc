@@ -14,6 +14,6 @@
     "binding": "ASSETS",
     "directory": "./dist",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/", "/index.html", "/robots.txt", "/sitemap.xml"]
+    "run_worker_first": ["/*", "/", "/index.html", "/robots.txt", "/sitemap.xml"]
   }
 }
