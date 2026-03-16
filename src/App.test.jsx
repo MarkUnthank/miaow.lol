@@ -37,6 +37,13 @@ const appTestMocks = vi.hoisted(() => {
   };
 });
 
+const analyticsTestMocks = vi.hoisted(() => ({
+  initializeAnalytics: vi.fn(),
+  trackExperienceView: vi.fn(),
+  trackPageView: vi.fn(),
+  trackShareExperience: vi.fn(),
+}));
+
 vi.mock('./components/Lobby', async () => {
   const { jsx, jsxs } = await import('react/jsx-runtime');
 
@@ -96,6 +103,8 @@ vi.mock('./data/experiences', () => ({
     return (index + length) % length;
   },
 }));
+
+vi.mock('./analytics', () => analyticsTestMocks);
 
 describe('App', () => {
   let fullscreenElement;
@@ -167,6 +176,10 @@ describe('App', () => {
       .forEach((node) => node.remove());
     delete window[APP_API_NAME];
     appTestMocks.getRandomExperienceNavigation.mockReset().mockReturnValue({ nextIndex: 2, seenIndices: [2] });
+    analyticsTestMocks.initializeAnalytics.mockClear();
+    analyticsTestMocks.trackExperienceView.mockClear();
+    analyticsTestMocks.trackPageView.mockClear();
+    analyticsTestMocks.trackShareExperience.mockClear();
     appTestMocks.experiences.forEach((experience) => {
       experience.preload.mockClear();
       experience.loadPreviewHtml.mockClear();
@@ -247,6 +260,35 @@ describe('App', () => {
     );
     expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute('href', experienceUrl);
     expect(document.querySelector('meta[property="og:url"]')).toHaveAttribute('content', experienceUrl);
+  });
+
+  it('tracks page views and experience visits for app navigation', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    expect(analyticsTestMocks.initializeAnalytics).toHaveBeenCalledTimes(1);
+    expect(analyticsTestMocks.trackPageView).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        pageLocation: `${window.location.origin}/`,
+        pagePath: '/',
+        pageTitle: 'omg... these cat toys on miaow.lol just ate my afternoon',
+      }),
+    );
+    expect(analyticsTestMocks.trackExperienceView).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'launch-second' }));
+
+    expect(analyticsTestMocks.trackPageView).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        experienceId: 'experience-1',
+        pageLocation: `${window.location.origin}/?experience=experience-1`,
+        pagePath: '/?experience=experience-1',
+        pageTitle: 'BREAKING: I literally cannot stop using Box Fort on miaow.lol',
+      }),
+    );
+    expect(analyticsTestMocks.trackExperienceView).toHaveBeenCalledWith('experience-1');
   });
 
   it('pushes in-app history and restores prior states from popstate', async () => {
@@ -360,6 +402,10 @@ describe('App', () => {
         url: expectedUrl,
       }),
     );
+    expect(analyticsTestMocks.trackShareExperience).toHaveBeenCalledWith({
+      experienceId: 'experience-1',
+      shareMethod: 'native',
+    });
     expect(screen.queryByRole('dialog', { name: 'Share options' })).not.toBeInTheDocument();
     randomSpy.mockRestore();
   });
@@ -404,6 +450,13 @@ describe('App', () => {
 
     expect(screen.getByTestId('player-title')).toHaveTextContent('Box Fort');
     expect(window.history.state).toMatchObject({ mode: 'player', currentIndex: 1, step: 0 });
+    expect(analyticsTestMocks.trackPageView).toHaveBeenCalledWith(
+      expect.objectContaining({
+        experienceId: 'experience-1',
+        pageLocation: `${window.location.origin}/?experience=experience-1`,
+      }),
+    );
+    expect(analyticsTestMocks.trackExperienceView).toHaveBeenCalledWith('experience-1');
   });
 
   it('launches a random experience from the lobby button', async () => {
@@ -431,5 +484,18 @@ describe('App', () => {
     expect(appTestMocks.getRandomExperienceNavigation).toHaveBeenNthCalledWith(1, 1, [1]);
     expect(appTestMocks.getRandomExperienceNavigation).toHaveBeenNthCalledWith(2, 2, [1, 2]);
     expect(screen.getByTestId('player-title')).toHaveTextContent('Cat Mash Chaos');
+  });
+
+  it('tracks desktop share link clicks as share events', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'Share' }));
+    await user.click(screen.getByRole('link', { name: 'WhatsApp' }));
+
+    expect(analyticsTestMocks.trackShareExperience).toHaveBeenCalledWith({
+      experienceId: 'experience-0',
+      shareMethod: 'whatsapp',
+    });
   });
 });

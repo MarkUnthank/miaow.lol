@@ -23,6 +23,27 @@ Vite will print the local URL.
 npm test
 ```
 
+## Analytics
+
+Basic GA4 instrumentation is wired in, but it stays off until you provide a public measurement ID at build time.
+
+```bash
+echo 'VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX' >> .env.local
+```
+
+What gets tracked:
+
+- `page_view` for SPA navigation.
+- `view_experience` with `experience_id` so you can see which toy gets visited most.
+- `share_experience` with `experience_id` and `share_method` so you can count shares and see which toy gets shared most.
+
+In GA4 Admin, register these event-scoped custom dimensions before building reports:
+
+- `experience_id`
+- `share_method`
+
+Security note: the GA4 measurement ID is public client-side configuration, not a secret. Do not commit analytics admin credentials, service account keys, BigQuery credentials, or any other private Google credentials to this repository.
+
 ## Cloudflare Workers
 
 This repo deploys as a Worker with static assets behind the `ASSETS` binding. The Worker layer keeps home and shared toy URLs crawlable by injecting the right SEO and social metadata at the edge, and it serves `robots.txt` plus `sitemap.xml`.
@@ -51,6 +72,10 @@ Set these GitHub repository secrets before relying on automated deploys:
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
+
+Set this GitHub repository variable if you want GA4 enabled in CI-built deploys:
+
+- `VITE_GA_MEASUREMENT_ID`
 
 ## Project layout
 

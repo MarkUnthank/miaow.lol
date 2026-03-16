@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { trackShareExperience } from '../analytics';
 import { buildShareLinks, buildSharePayload, shouldUseNativeShare } from '../share';
 import {
   EmailIcon,
@@ -108,6 +109,13 @@ export function ShareDock({ experience }) {
     };
   }, [isOpen]);
 
+  function trackShare(shareMethod) {
+    trackShareExperience({
+      experienceId: experience.id,
+      shareMethod,
+    });
+  }
+
   async function handlePrimaryClick() {
     setIsNudging(false);
     const nextPayload = buildSharePayload(experience, window.location);
@@ -115,6 +123,7 @@ export function ShareDock({ experience }) {
     if (shouldUseNativeShare()) {
       try {
         await navigator.share(nextPayload);
+        trackShare('native');
       } catch (error) {
         if (error?.name !== 'AbortError') {
           setPayload(nextPayload);
@@ -134,16 +143,25 @@ export function ShareDock({ experience }) {
   }
 
   async function handleCopyLink() {
-    await copyText(payload.url);
+    const copied = await copyText(payload.url);
+
+    if (copied) {
+      trackShare('copy_link');
+    }
+  }
+
+  function handleShareOptionClick(shareMethod) {
+    trackShare(shareMethod);
+    setIsOpen(false);
   }
 
   const shareItems = [
-    { href: links.email, icon: EmailIcon, label: 'Email' },
-    { href: links.whatsapp, icon: WhatsAppIcon, label: 'WhatsApp' },
-    { href: links.telegram, icon: TelegramIcon, label: 'Telegram' },
-    { href: links.x, icon: XLogoIcon, label: 'X' },
-    { href: links.facebook, icon: FacebookIcon, label: 'Facebook' },
-    { href: links.reddit, icon: RedditIcon, label: 'Reddit' },
+    { href: links.email, icon: EmailIcon, label: 'Email', shareMethod: 'email' },
+    { href: links.whatsapp, icon: WhatsAppIcon, label: 'WhatsApp', shareMethod: 'whatsapp' },
+    { href: links.telegram, icon: TelegramIcon, label: 'Telegram', shareMethod: 'telegram' },
+    { href: links.x, icon: XLogoIcon, label: 'X', shareMethod: 'x' },
+    { href: links.facebook, icon: FacebookIcon, label: 'Facebook', shareMethod: 'facebook' },
+    { href: links.reddit, icon: RedditIcon, label: 'Reddit', shareMethod: 'reddit' },
   ];
 
   return (
@@ -160,8 +178,15 @@ export function ShareDock({ experience }) {
               <LinkIcon className="share-dock__item-icon" />
               <span>Copy link</span>
             </button>
-            {shareItems.map(({ href, icon: Icon, label }) => (
-              <a className="share-dock__item" href={href} key={label} onClick={() => setIsOpen(false)} rel="noreferrer" target="_blank">
+            {shareItems.map(({ href, icon: Icon, label, shareMethod }) => (
+              <a
+                className="share-dock__item"
+                href={href}
+                key={label}
+                onClick={() => handleShareOptionClick(shareMethod)}
+                rel="noreferrer"
+                target="_blank"
+              >
                 <Icon className="share-dock__item-icon" />
                 <span>{label}</span>
               </a>

@@ -11,6 +11,9 @@ concurrency:
   group: cloudflare-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  VITE_GA_MEASUREMENT_ID: ${{ vars.VITE_GA_MEASUREMENT_ID }}
+
 jobs:
   validate:
     name: Validate

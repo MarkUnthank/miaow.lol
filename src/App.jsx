@@ -4,6 +4,7 @@ import { Player } from './components/Player';
 import { ShareDock } from './components/ShareDock';
 import { experiences, getRandomExperienceNavigation, getWrappedIndex, markExperienceSeen } from './data/experiences';
 import { APP_API_NAME } from './appApi';
+import { initializeAnalytics, trackExperienceView, trackPageView } from './analytics';
 import { MobileOverlay } from './components/MobileOverlay';
 import { applySeoMetadata, buildSeoMetadata } from './seo';
 import { buildExperienceUrl, buildHistoryPath, buildHomeUrl, getExperienceIndexFromLocation } from './share';
@@ -226,7 +227,27 @@ export default function App() {
   }, [currentIndex]);
 
   useEffect(() => {
+    initializeAnalytics();
+  }, []);
+
+  useEffect(() => {
     applySeoMetadata(buildSeoMetadata(mode === 'player' ? experiences[currentIndex] : null, window.location));
+  }, [currentIndex, mode]);
+
+  useEffect(() => {
+    const activeExperience = mode === 'player' ? experiences[currentIndex] : null;
+    const pageLocation = activeExperience ? buildExperienceUrl(activeExperience.id, window.location) : buildHomeUrl(window.location);
+
+    trackPageView({
+      experienceId: activeExperience?.id,
+      pageLocation,
+      pagePath: buildHistoryPath(pageLocation),
+      pageTitle: document.title,
+    });
+
+    if (activeExperience?.id) {
+      trackExperienceView(activeExperience.id);
+    }
   }, [currentIndex, mode]);
 
   useEffect(() => {
