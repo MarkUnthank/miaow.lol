@@ -1841,6 +1841,14 @@ button {
   gap: 0.7rem;
 }
 
+.player-overlay__menu-dock {
+  pointer-events: auto;
+  display: grid;
+  justify-items: end;
+  gap: 0.85rem;
+  margin-left: auto;
+}
+
 .player-overlay__utility {
   display: flex;
   align-items: center;
