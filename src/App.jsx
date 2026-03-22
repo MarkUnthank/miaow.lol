@@ -5,7 +5,6 @@ import { ShareDock } from './components/ShareDock';
 import { experiences, getRandomExperienceNavigation, getWrappedIndex, markExperienceSeen } from './data/experiences';
 import { APP_API_NAME } from './appApi';
 import { initializeAnalytics, trackExperienceView, trackPageView } from './analytics';
-import { MobileOverlay } from './components/MobileOverlay';
 import { applySeoMetadata, buildSeoMetadata } from './seo';
 import { buildExperienceUrl, buildHistoryPath, buildHomeUrl, getExperienceIndexFromLocation } from './share';
 
@@ -469,7 +468,6 @@ export default function App() {
       ) : null}
 
       <ShareDock experience={themedExperience} />
-      <MobileOverlay />
     </main>
   );
 }

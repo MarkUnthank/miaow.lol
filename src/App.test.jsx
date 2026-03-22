@@ -262,6 +262,14 @@ describe('App', () => {
     expect(document.querySelector('meta[property="og:url"]')).toHaveAttribute('content', experienceUrl);
   });
 
+  it('does not render the legacy mobile-only interstitial', () => {
+    render(<App />);
+
+    expect(
+      screen.queryByText('This experience works best on a desktop device. Please come back later on a larger screen!'),
+    ).not.toBeInTheDocument();
+  });
+
   it('tracks page views and experience visits for app navigation', async () => {
     const user = userEvent.setup();
     render(<App />);

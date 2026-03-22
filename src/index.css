@@ -2254,48 +2254,6 @@ button {
   }
 }
 
-.mobile-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-}
-
-.mobile-overlay__card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 1.25rem;
-  padding: 2.5rem 2rem;
-  border: 1px solid var(--shell-border);
-  border-radius: 2rem;
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 32px 64px rgba(32, 24, 22, 0.12);
-  max-width: 24rem;
-}
-
-.mobile-overlay__card .app-wordmark {
-  position: static;
-  box-shadow: none;
-  margin-bottom: 0.5rem;
-  transform: scale(1.1);
-}
-
-.mobile-overlay__message {
-  margin: 0;
-  font-size: 1.1rem;
-  line-height: 1.5;
-  color: var(--theme-ink);
-  font-weight: 500;
-}
-
 @media (max-width: 1080px) {
   .lobby-screen {
     padding-bottom: 0;
@@ -2340,10 +2298,6 @@ button {
 
   .share-dock__grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .mobile-overlay {
-    display: flex;
   }
 
   .lobby-footer {
