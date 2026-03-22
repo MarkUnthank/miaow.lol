@@ -1,18 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeftIcon, ArrowRightIcon, DieIcon, ExpandIcon, SpeakerIcon } from './Icons';
+import { ArrowLeftIcon, ArrowRightIcon, DieIcon, ExpandIcon, MenuIcon, SpeakerIcon } from './Icons';
 import { PreviewArt } from './PreviewArt';
 import { getCenteredLoopIndex, getLoopRecenterCopyShift, getNearestLoopIndex, LOOP_COPY_COUNT } from './lobbyLoop';
 import { SITE_AUTHOR_URL } from '../siteConfig';
 
 const GITHUB_REPO_URL = 'https://github.com/MarkUnthank/miaow.lol';
+const COMPACT_TOP_CONTROLS_MEDIA_QUERY = '(max-width: 760px)';
 const SIBLING_PREVIEW_ENABLE_FPS = 38;
 const SIBLING_PREVIEW_DISABLE_FPS = 32;
 const SIBLING_PREVIEW_SAMPLE_WINDOW_MS = 3000;
 const SIBLING_PREVIEW_STABILITY_WINDOW_MS = 3000;
 
+function getIsCompactTopControls() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return false;
+  }
+
+  return window.matchMedia(COMPACT_TOP_CONTROLS_MEDIA_QUERY).matches;
+}
+
 export function Lobby({ experiences, activeIndex, isFullscreen, isMuted, onActiveIndexChange, onLaunch, onRandom, onToggleFullscreen, onToggleMute }) {
   const trackRef = useRef(null);
   const cardRefs = useRef([]);
+  const topControlsDockRef = useRef(null);
   const scrollFrameRef = useRef(0);
   const scrollSyncIgnoreUntilRef = useRef(0);
   const scrollSyncResetFrameRef = useRef(0);
@@ -23,6 +33,8 @@ export function Lobby({ experiences, activeIndex, isFullscreen, isMuted, onActiv
   const siblingPreviewsEnabledRef = useRef(false);
   const [trackEdgePadding, setTrackEdgePadding] = useState(20);
   const [activeVirtualIndex, setActiveVirtualIndex] = useState(() => getCenteredLoopIndex(experiences.length, activeIndex));
+  const [isCompactTopControls, setIsCompactTopControls] = useState(() => getIsCompactTopControls());
+  const [isTopControlsMenuOpen, setIsTopControlsMenuOpen] = useState(false);
   const [siblingPreviewsEnabled, setSiblingPreviewsEnabled] = useState(false);
 
   function clearScrollSyncIgnore() {
@@ -118,6 +130,65 @@ export function Lobby({ experiences, activeIndex, isFullscreen, isMuted, onActiv
 
     return nextLivePreviewVirtualIndexes;
   }, [activeVirtualIndex, experiences.length, siblingPreviewsEnabled]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return undefined;
+    }
+
+    const mediaQueryList = window.matchMedia(COMPACT_TOP_CONTROLS_MEDIA_QUERY);
+    const syncCompactTopControls = () => {
+      setIsCompactTopControls(mediaQueryList.matches);
+    };
+
+    syncCompactTopControls();
+
+    if (typeof mediaQueryList.addEventListener === 'function') {
+      mediaQueryList.addEventListener('change', syncCompactTopControls);
+
+      return () => {
+        mediaQueryList.removeEventListener('change', syncCompactTopControls);
+      };
+    }
+
+    mediaQueryList.addListener(syncCompactTopControls);
+
+    return () => {
+      mediaQueryList.removeListener(syncCompactTopControls);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isCompactTopControls) {
+      setIsTopControlsMenuOpen(false);
+    }
+  }, [isCompactTopControls]);
+
+  useEffect(() => {
+    if (!isTopControlsMenuOpen) {
+      return;
+    }
+
+    function handlePointerDown(event) {
+      if (!topControlsDockRef.current?.contains(event.target)) {
+        setIsTopControlsMenuOpen(false);
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        setIsTopControlsMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown, true);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isTopControlsMenuOpen]);
 
   function syncSiblingPreviewsEnabled(nextValue) {
     if (siblingPreviewsEnabledRef.current === nextValue) {
@@ -215,6 +286,15 @@ export function Lobby({ experiences, activeIndex, isFullscreen, isMuted, onActiv
 
   function moveSelection(delta) {
     activateCard(activeIndex + delta);
+  }
+
+  function handleTopControlsPrimaryClick() {
+    setIsTopControlsMenuOpen((currentValue) => !currentValue);
+  }
+
+  function handleTopControlsAction(action) {
+    action?.();
+    setIsTopControlsMenuOpen(false);
   }
 
   function handleCardSurfaceAction(logicalIndex, virtualIndex) {
@@ -512,19 +592,59 @@ export function Lobby({ experiences, activeIndex, isFullscreen, isMuted, onActiv
         </div>
       </div>
 
-      <div className="fullscreen-dock">
-        <div className="fullscreen-dock__controls">
-          <button className={`action-button action-button--dock ${isFullscreen ? 'is-armed' : ''}`.trim()} onClick={onToggleFullscreen} type="button">
-            <ExpandIcon className="action-button__icon" />
-            <span>{isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}</span>
+      {isCompactTopControls ? (
+        <div className="top-controls-dock" ref={topControlsDockRef}>
+          <button
+            aria-expanded={isTopControlsMenuOpen}
+            aria-haspopup="dialog"
+            className="share-dock__button"
+            onClick={handleTopControlsPrimaryClick}
+            type="button"
+          >
+            <MenuIcon className="share-dock__icon" />
+            <span>Menu</span>
           </button>
 
-          <button className="action-button action-button--dock" onClick={onToggleMute} type="button">
-            <SpeakerIcon className="action-button__icon" muted={isMuted} />
-            <span>{isMuted ? 'Unmute' : 'Mute'}</span>
-          </button>
+          {isTopControlsMenuOpen ? (
+            <div aria-label="Lobby options" className="share-dock__menu" role="dialog">
+              <div className="share-dock__menu-header">
+                <p className="share-dock__eyebrow">Menu</p>
+                <h2 className="share-dock__title">Lobby controls</h2>
+              </div>
+
+              <div className="share-dock__grid">
+                <button
+                  className={`share-dock__item ${isFullscreen ? 'action-button--dock is-armed' : ''}`.trim()}
+                  onClick={() => handleTopControlsAction(onToggleFullscreen)}
+                  type="button"
+                >
+                  <ExpandIcon className="share-dock__item-icon" />
+                  <span>{isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}</span>
+                </button>
+
+                <button className="share-dock__item" onClick={() => handleTopControlsAction(onToggleMute)} type="button">
+                  <SpeakerIcon className="share-dock__item-icon" muted={isMuted} />
+                  <span>{isMuted ? 'Unmute' : 'Mute'}</span>
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
-      </div>
+      ) : (
+        <div className="fullscreen-dock">
+          <div className="fullscreen-dock__controls">
+            <button className={`action-button action-button--dock ${isFullscreen ? 'is-armed' : ''}`.trim()} onClick={onToggleFullscreen} type="button">
+              <ExpandIcon className="action-button__icon" />
+              <span>{isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}</span>
+            </button>
+
+            <button className="action-button action-button--dock" onClick={onToggleMute} type="button">
+              <SpeakerIcon className="action-button__icon" muted={isMuted} />
+              <span>{isMuted ? 'Unmute' : 'Mute'}</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="random-dock">
         <button className="action-button action-button--dock action-button--random" onClick={onRandom} type="button">

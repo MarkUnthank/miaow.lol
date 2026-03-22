@@ -99,6 +99,16 @@ export function ShareIcon({ className }) {
   );
 }
 
+export function MenuIcon({ className }) {
+  return (
+    <IconBase className={className}>
+      <path d="M4 7h16" />
+      <path d="M4 12h16" />
+      <path d="M4 17h16" />
+    </IconBase>
+  );
+}
+
 export function DieIcon({ className }) {
   return (
     <IconBase className={className}>

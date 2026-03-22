@@ -122,6 +122,19 @@ function installMockAnimationFrame() {
   };
 }
 
+function mockMatchMedia(matchesByQuery = {}) {
+  window.matchMedia.mockImplementation((query) => ({
+    addEventListener: vi.fn(),
+    addListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+    matches: matchesByQuery[query] ?? false,
+    media: query,
+    onchange: null,
+    removeEventListener: vi.fn(),
+    removeListener: vi.fn(),
+  }));
+}
+
 describe('Lobby', () => {
   it('centers the initial loop position without using smooth scroll animation', () => {
     const scrollToSpy = vi.fn();
@@ -337,5 +350,86 @@ describe('Lobby', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Random toy' })).toBeInTheDocument();
+  });
+
+  it('keeps fullscreen and mute as inline top controls on desktop-sized screens', () => {
+    render(
+      <Lobby
+        experiences={createExperiences()}
+        activeIndex={0}
+        isFullscreen={false}
+        isMuted={false}
+        onActiveIndexChange={vi.fn()}
+        onLaunch={vi.fn()}
+        onRandom={vi.fn()}
+        onToggleFullscreen={vi.fn()}
+        onToggleMute={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Fullscreen' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mute' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Menu' })).not.toBeInTheDocument();
+  });
+
+  it('collapses the top controls into a mobile menu and closes it after selection', async () => {
+    mockMatchMedia({ '(max-width: 760px)': true });
+    const user = userEvent.setup();
+    const onToggleMute = vi.fn();
+
+    render(
+      <Lobby
+        experiences={createExperiences()}
+        activeIndex={0}
+        isFullscreen={false}
+        isMuted={false}
+        onActiveIndexChange={vi.fn()}
+        onLaunch={vi.fn()}
+        onRandom={vi.fn()}
+        onToggleFullscreen={vi.fn()}
+        onToggleMute={onToggleMute}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Menu' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Fullscreen' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Mute' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Menu' }));
+
+    expect(screen.getByRole('dialog', { name: 'Lobby options' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fullscreen' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mute' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Mute' }));
+
+    expect(onToggleMute).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('dialog', { name: 'Lobby options' })).not.toBeInTheDocument();
+  });
+
+  it('closes the mobile controls menu when clicking outside it', async () => {
+    mockMatchMedia({ '(max-width: 760px)': true });
+    const user = userEvent.setup();
+
+    render(
+      <Lobby
+        experiences={createExperiences()}
+        activeIndex={0}
+        isFullscreen={false}
+        isMuted={false}
+        onActiveIndexChange={vi.fn()}
+        onLaunch={vi.fn()}
+        onRandom={vi.fn()}
+        onToggleFullscreen={vi.fn()}
+        onToggleMute={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Menu' }));
+    expect(screen.getByRole('dialog', { name: 'Lobby options' })).toBeInTheDocument();
+
+    await user.click(document.body);
+
+    expect(screen.queryByRole('dialog', { name: 'Lobby options' })).not.toBeInTheDocument();
   });
 });

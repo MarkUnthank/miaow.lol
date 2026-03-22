@@ -1593,6 +1593,16 @@ button {
   z-index: 4;
 }
 
+.top-controls-dock {
+  position: absolute;
+  top: max(env(safe-area-inset-top), clamp(1.1rem, 2vw, 2rem));
+  right: max(env(safe-area-inset-right), clamp(1.1rem, 2vw, 2rem));
+  z-index: 5;
+  display: grid;
+  justify-items: end;
+  gap: 0.85rem;
+}
+
 .fullscreen-dock__controls {
   display: flex;
   align-items: center;
